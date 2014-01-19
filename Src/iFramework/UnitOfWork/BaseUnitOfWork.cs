@@ -33,20 +33,7 @@ namespace IFramework.UnitOfWork
 
         protected IDomainEventBus _DomainEventBus;
 
-        public virtual void Commit()
-        {
-            if (_DomainEventBus != null)
-            {
-                _DomainEventBus.Commit();
-                if (Configuration.GetAppConfig<bool>("PersistanceMessage"))
-                {
-                    // TODO: persistance command and domain events
-                    var currentCommandContext = PerMessageContextLifetimeManager.CurrentMessageContext;
-                    var domainEventContexts = _DomainEventBus.GetMessageContexts();
-                    MessageStore.Save(currentCommandContext, domainEventContexts);
-                }
-            }
-        }
+        public abstract void Commit();
 
         #endregion
 

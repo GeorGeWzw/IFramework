@@ -28,13 +28,14 @@ namespace IFramework.MessageQueue.EQueue
 
         public MessageConsumer()
         {
-            _Logger = IoCFactory.Resolve<ILoggerFactory>().Create(this.GetType());
+            
         }
 
         public MessageConsumer(string id, ConsumerSettings consumerSettings, string groupName, MessageModel messageModel, string subscribeTopic)
             : this()
         {
             Name = id;
+            _Logger = IoCFactory.Resolve<ILoggerFactory>().Create(Name);
             Consumer = new Consumer(id, consumerSettings, groupName, MessageModel.Clustering, this)
                 .Subscribe(subscribeTopic);
         }
@@ -53,10 +54,10 @@ namespace IFramework.MessageQueue.EQueue
 
         public virtual string GetStatus()
         {
-            return string.Format("commandConsumer {0} handled command {1}", Name, HandledMessageCount);
+            return string.Format("{0} Handled command {1}", Name, HandledMessageCount);
         }
 
-        public virtual void Handle(global::EQueue.Protocols.Message message)
+        public virtual void Handle(global::EQueue.Protocols.QueueMessage message)
         {
             ConsumeMessage(message.Body.GetMessage<TMessage>());
             HandledMessageCount++;

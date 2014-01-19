@@ -30,7 +30,6 @@ namespace IFramework.MessageQueue.EQueue
             {
                 Producer = new Producer(brokerAddress, brokerPort);
                 Producer.Start();
-                Task.Factory.StartNew(PublishEvent);
             }
             catch (Exception ex)
             {
@@ -38,43 +37,27 @@ namespace IFramework.MessageQueue.EQueue
             }
         }
 
-        public IEnumerable<IMessageContext> Publish(IEnumerable<IDomainEvent> events)
+        public IEnumerable<IMessageContext> Publish(params IDomainEvent[] events)
         {
             List<IMessageContext> messageContexts = new List<IMessageContext>();
             events.ForEach(@event =>
             {
-                messageContexts.Add(Publish(@event));
+                var messageContext = new MessageContext(@event);
+                messageContexts.Add(messageContext);
             });
-            return messageContexts;
-        }
-
-        public IMessageContext Publish(IDomainEvent @event)
-        {
-            var messageContext = new MessageContext(@event);
-            MessageQueue.Add(messageContext);
-            return messageContext;
-        }
-
-        void PublishEvent()
-        {
-            while (true)
+            var messageBody = messageContexts.GetMessageBytes();
+            var sendResult = Producer.Send(new global::EQueue.Protocols.Message(Topic, messageBody), string.Empty);
+            if (sendResult.SendStatus == SendStatus.Success)
             {
-                var eventContext = MessageQueue.Take();
-                var messageBody = eventContext.GetMessageBytes();
-                Producer.SendAsync(new global::EQueue.Protocols.Message(Topic, messageBody), string.Empty)
-                        .ContinueWith(task =>
-                          {
-                              if (task.Result.SendStatus == SendStatus.Success)
-                              {
-                                  _Logger.DebugFormat("sent event {0}, body: {1}", eventContext.MessageID,
-                                                                                  eventContext.Message.ToJson());
-                              }
-                              else
-                              {
-                                  _Logger.ErrorFormat("Send event {0}", task.Result.SendStatus.ToString());
-                              }
-                          });
+                _Logger.DebugFormat("publish {0} events success, body {1}", 
+                                     messageContexts.Count, messageContexts.ToJson());
             }
+            else
+            {
+                _Logger.ErrorFormat("Send {0} event failed {1}", 
+                                     messageContexts.Count, sendResult.SendStatus.ToString());
+            }
+            return messageContexts;
         }
     }
 }

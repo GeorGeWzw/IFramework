@@ -7,12 +7,7 @@ namespace IFramework.Event.Impl
 {
     class MockEventPublisher : IEventPublisher
     {
-        public IEnumerable<Message.IMessageContext> Publish(IEnumerable<IDomainEvent> events)
-        {
-            return null;
-        }
-
-        public Message.IMessageContext Publish(IDomainEvent @event)
+        public IEnumerable<Message.IMessageContext> Publish(params IDomainEvent[] events)
         {
             return null;
         }

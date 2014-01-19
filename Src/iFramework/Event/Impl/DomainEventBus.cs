@@ -7,12 +7,13 @@ using IFramework.Message;
 using IFramework.Message.Impl;
 using System.Collections;
 using IFramework.Event;
+using System.Collections.Concurrent;
 
 namespace IFramework.Event.Impl
 {
     public class DomainEventBus : IDomainEventBus
     {
-        protected Queue DomainEventQueue;
+        protected ConcurrentQueue<IDomainEvent> DomainEventQueue;
         protected IEventSubscriberProvider EventSubscriberProvider { get; set; }
         protected IEventPublisher EventPublisher { get; set; }
         protected IEnumerable<IMessageContext> SentMessageContexts { get; set; }
@@ -20,12 +21,12 @@ namespace IFramework.Event.Impl
         {
             EventPublisher = eventPublisher;
             EventSubscriberProvider = provider;
-            DomainEventQueue = Queue.Synchronized(new Queue());
+            DomainEventQueue = new ConcurrentQueue<IDomainEvent>();
         }
 
         public virtual void Commit()
         {
-            SentMessageContexts = EventPublisher.Publish(DomainEventQueue.Cast<IDomainEvent>());
+            SentMessageContexts = EventPublisher.Publish(DomainEventQueue.ToArray());
         }
 
         public void Publish<TEvent>(TEvent @event) where TEvent : IDomainEvent

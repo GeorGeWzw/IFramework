@@ -59,14 +59,16 @@ namespace IFramework.MessageQueue.ZeroMQ
 
         protected override void ReceiveMessage(Frame frame)
         {
-            var messageContext = System.Text.Encoding
+            var messageContexts = System.Text.Encoding
                                             .GetEncoding("utf-8")
                                             .GetString(frame.Buffer)
-                                            .ToJsonObject<MessageContext>();
-            if (messageContext != null)
+                                            .ToJsonObject<List<MessageContext>>();
+
+            messageContexts.ForEach(messageContext =>
             {
                 MessageQueue.Add(messageContext);
-            }
+                HandledMessageCount++;
+            });
         }
 
         protected override void ConsumeMessage(IMessageContext messageContext)

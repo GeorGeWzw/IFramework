@@ -27,6 +27,16 @@ namespace IFramework.MessageQueue.EQueue
             HandlerProvider = handlerProvider;
         }
 
+        public override void Handle(global::EQueue.Protocols.QueueMessage message)
+        {
+            var messageContexts = message.Body.GetMessage<List<MessageContext>>();
+            messageContexts.ForEach(messageContext =>
+            {
+                ConsumeMessage(messageContext);
+                HandledMessageCount++;
+            });
+        }
+
         protected override void ConsumeMessage(MessageContext messageContext)
         {
             var message = messageContext.Message;
