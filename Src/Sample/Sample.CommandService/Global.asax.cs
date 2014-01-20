@@ -114,13 +114,7 @@ namespace Sample.CommandService
                 consumerSettings.MessageHandleMode = MessageHandleMode.Sequential;
                 var producerPort = 5000;
 
-                IEventPublisher eventPublisher = new EventPublisher("domainevent", 
-                                                                    consumerSettings.BrokerAddress,
-                                                                    producerPort);
-                IoCFactory.Instance.CurrentContainer.RegisterInstance(typeof(IEventPublisher), 
-                                                                      eventPublisher, 
-                                                                      new ContainerControlledLifetimeManager());
-
+              
                 var eventHandlerProvider = IoCFactory.Resolve<IHandlerProvider>("AsyncDomainEventSubscriber");
                 IMessageConsumer domainEventSubscriber = new DomainEventSubscriber("domainEventSubscriber1",
                                                                                    consumerSettings,
@@ -130,6 +124,12 @@ namespace Sample.CommandService
                 domainEventSubscriber.Start();
                 IoCFactory.Instance.CurrentContainer.RegisterInstance("DomainEventConsumer", domainEventSubscriber);
 
+                IEventPublisher eventPublisher = new EventPublisher("domainevent",
+                                                                  consumerSettings.BrokerAddress,
+                                                                  producerPort);
+                IoCFactory.Instance.CurrentContainer.RegisterInstance(typeof(IEventPublisher),
+                                                                      eventPublisher,
+                                                                      new ContainerControlledLifetimeManager());
 
 
                 var commandHandlerProvider = IoCFactory.Resolve<ICommandHandlerProvider>();

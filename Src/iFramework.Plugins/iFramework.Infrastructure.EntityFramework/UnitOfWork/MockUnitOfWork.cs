@@ -19,5 +19,10 @@ namespace IFramework.EntityFramework
         {
             return null;
         }
+
+        public override void Commit()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
