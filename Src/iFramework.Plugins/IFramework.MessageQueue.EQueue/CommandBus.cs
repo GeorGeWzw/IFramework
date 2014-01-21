@@ -67,7 +67,7 @@ namespace IFramework.MessageQueue.EQueue
             {
                 Producer.Start();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _Logger.Error(ex.GetBaseException().Message, ex);
             }
@@ -200,25 +200,24 @@ namespace IFramework.MessageQueue.EQueue
             commandState.CancellationToken.Register(onCancel, commandState);
             MessageStateQueue.Add(commandState.MessageID, commandState);
             var commandKey = commandState.MessageContext.Key;
-            
+
             if (string.IsNullOrWhiteSpace(commandKey))
             {
                 commandKey = commandState.MessageID;
             }
 
             var messageBody = Encoding.UTF8.GetBytes(commandContext.ToJson());
-            Producer.SendAsync(new global::EQueue.Protocols.Message(CommandTopic, messageBody), commandKey)
-                    .ContinueWith(task => {
-                        if (task.Result.SendStatus == SendStatus.Success)
-                        {
-                            _Logger.DebugFormat("sent commandID {0}, body: {1}", commandContext.MessageID,
-                                                                            commandContext.Message.ToJson());
-                        }
-                        else
-                        {
-                            _Logger.ErrorFormat("Send Command {0}", task.Result.SendStatus.ToString());
-                        }
-                    });
+            var sendResult = Producer.Send(new global::EQueue.Protocols.Message(CommandTopic, messageBody), commandKey);
+
+            if (sendResult.SendStatus == SendStatus.Success)
+            {
+                _Logger.DebugFormat("sent commandID {0}, body: {1}", commandContext.MessageID,
+                                                                commandContext.Message.ToJson());
+            }
+            else
+            {
+                _Logger.ErrorFormat("Send Command {0}", sendResult.SendStatus.ToString());
+            }
             return commandState.TaskCompletionSource.Task;
         }
 
