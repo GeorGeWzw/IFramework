@@ -17,7 +17,7 @@ namespace Sample.DomainEventHandler.Community
 
         public void Handle(AccountLogin @event)
         {
-            Console.Write("user login.");
+           // Console.Write("user login.");
         }
     }
 }

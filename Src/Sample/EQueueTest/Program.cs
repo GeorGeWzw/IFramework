@@ -16,6 +16,7 @@ using IFramework.Command;
 using Microsoft.Practices.Unity;
 using System.Threading.Tasks;
 using Sample.Command;
+using System.Threading;
 
 namespace EQueueTest
 {
@@ -101,6 +102,8 @@ namespace EQueueTest
                                                                       commandBus,
                                                                       new ContainerControlledLifetimeManager());
                 commandBus.Start();
+
+                Thread.Sleep(10000);
 
                 var worker = new Worker(commandBus);
                 worker.StartTest();

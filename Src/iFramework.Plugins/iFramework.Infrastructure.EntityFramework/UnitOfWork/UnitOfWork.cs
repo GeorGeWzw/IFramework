@@ -18,8 +18,8 @@ namespace IFramework.EntityFramework
 {
     public class UnitOfWork : BaseUnitOfWork
     {
-        [Dependency(Constants.Configuration.DomainModelContext)]
-        public DbContext DomainModelContext { get; set; }
+        //[Dependency(Constants.Configuration.DomainModelContext)]
+        //public DbContext DomainModelContext { get; set; }
 
 
         public UnitOfWork(IDomainEventBus eventBus)
@@ -56,9 +56,10 @@ namespace IFramework.EntityFramework
         {
             try
             {
+                return null;
 
-                var repository = IoCFactory.Resolve<IRepository<TAggregateRoot>>(new ParameterOverride("dbContext", this.DomainModelContext));
-                return repository;
+                //var repository = IoCFactory.Resolve<IRepository<TAggregateRoot>>(new ParameterOverride("dbContext", this.DomainModelContext));
+                //return repository;
             }
             catch
             {

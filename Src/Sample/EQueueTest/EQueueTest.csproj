@@ -48,9 +48,6 @@
     <Reference Include="EQueue.Log4Net">
       <HintPath>..\..\iFramework.Plugins\IFramework.MessageQueue.EQueue\EQueueRefs\EQueue.Log4Net.dll</HintPath>
     </Reference>
-    <Reference Include="IFramework.EntityFramework">
-      <HintPath>..\..\..\..\..\..\..\..\..\Users\Ivan\Documents\Private\Project2010\VisionSolution\trunk\CustomerCenter\RefBins\IFramework.EntityFramework.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Practices.ServiceLocation">
       <HintPath>..\..\packages\CommonServiceLocator.1.0\lib\NET35\Microsoft.Practices.ServiceLocation.dll</HintPath>
     </Reference>
@@ -77,6 +74,10 @@
     <Compile Include="Worker.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\iFramework.Plugins\iFramework.Infrastructure.EntityFramework\IFramework.EntityFramework.csproj">
+      <Project>{c00b8ad6-47c2-4642-877e-2c759d05dcfe}</Project>
+      <Name>IFramework.EntityFramework</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\iFramework.Plugins\IFramework.Log4Net\IFramework.Log4Net.csproj">
       <Project>{fa2a9b98-456f-487b-b911-6c730abb6bb6}</Project>
       <Name>IFramework.Log4Net</Name>
@@ -124,6 +125,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Content Include="log4net.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
