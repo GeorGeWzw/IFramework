@@ -73,7 +73,7 @@ namespace IFramework.MessageQueue.EQueue
             }
         }
 
-        protected override void ConsumeMessage(MessageReply reply)
+        protected override void ConsumeMessage(MessageReply reply, QueueMessage queueMessage)
         {
             _Logger.DebugFormat("Handle reply:{0} content:{1}", reply.MessageID, reply.ToJson());
             var messageState = MessageStateQueue[reply.MessageID] as MessageState;

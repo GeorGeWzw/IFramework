@@ -12,6 +12,7 @@ using IFramework.Message.Impl;
 using IFramework.Infrastructure.Unity.LifetimeManagers;
 using IFramework.MessageQueue.MessageFormat;
 using EQueue.Clients.Consumers;
+using EQueue.Protocols;
 
 namespace IFramework.MessageQueue.EQueue
 {
@@ -32,13 +33,16 @@ namespace IFramework.MessageQueue.EQueue
             var messageContexts = message.Body.GetMessage<List<MessageContext>>();
             messageContexts.ForEach(messageContext =>
             {
-                ConsumeMessage(messageContext);
+                ConsumeMessage(messageContext, message);
                 HandledMessageCount++;
             });
         }
 
-        protected override void ConsumeMessage(MessageContext messageContext)
+        protected override void ConsumeMessage(MessageContext messageContext, QueueMessage queueMessage)
         {
+
+            _Logger.DebugFormat("Start Handle event , messageContextID:{0} queueID:{1}", messageContext.MessageID, queueMessage.QueueId);
+
             var message = messageContext.Message;
             var messageHandlers = HandlerProvider.GetHandlers(message.GetType());
             messageHandlers.ForEach(messageHandler =>
@@ -55,6 +59,8 @@ namespace IFramework.MessageQueue.EQueue
                 finally
                 {
                     messageContext.ClearItems();
+                    _Logger.DebugFormat("End Handle event , messageContextID:{0} queueID:{1}", messageContext.MessageID, queueMessage.QueueId);
+
                 }
             });
         }

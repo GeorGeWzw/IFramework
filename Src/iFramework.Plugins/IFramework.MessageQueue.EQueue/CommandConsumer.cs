@@ -72,16 +72,15 @@ namespace IFramework.MessageQueue.EQueue
             }
         }
 
-        protected override void ConsumeMessage(MessageContext messageContext)
+        protected override void ConsumeMessage(MessageContext messageContext, QueueMessage queueMessage)
         {
             IMessageReply messageReply = null;
             if (messageContext == null || messageContext.Message == null)
             {
                 return;
             }
-            var queueIDs = string.Join(",", Consumer.GetCurrentQueues().Select(x => x.QueueId));
 
-            _Logger.DebugFormat("Start Handle command, commandID:{0} queueID:{1}", messageContext.MessageID, queueIDs);
+            _Logger.DebugFormat("Start Handle command, commandID:{0} queueID:{1}", messageContext.MessageID, queueMessage.QueueId);
             var message = messageContext.Message;
             var messageHandlers = HandlerProvider.GetHandlers(message.GetType());
             try
@@ -109,7 +108,7 @@ namespace IFramework.MessageQueue.EQueue
             {
                 messageContext.ClearItems();
                 OnMessageHandled(messageContext, messageReply);
-                _Logger.DebugFormat("End Handle command, commandID:{0} queueID{1}", messageContext.MessageID, queueIDs);
+                _Logger.DebugFormat("End Handle command, commandID:{0} queueID{1}", messageContext.MessageID, queueMessage.QueueId);
 
             }
         }

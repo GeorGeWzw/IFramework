@@ -61,10 +61,10 @@ namespace IFramework.MessageQueue.EQueue
 
         public virtual void Handle(global::EQueue.Protocols.QueueMessage message)
         {
-            ConsumeMessage(message.Body.GetMessage<TMessage>());
+            ConsumeMessage(message.Body.GetMessage<TMessage>(), message);
             HandledMessageCount++;
         }
 
-        protected abstract void ConsumeMessage(TMessage messageContext);
+        protected abstract void ConsumeMessage(TMessage messageContext, QueueMessage message);
     }
 }
