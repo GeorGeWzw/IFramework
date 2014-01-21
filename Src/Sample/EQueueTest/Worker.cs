@@ -63,7 +63,7 @@ namespace EQueueTest
             commands.Add(new LoginCommand { UserName = "Ivan1", Password = "123456" });
             commands.Add(new LoginCommand { UserName = "Ivan12", Password = "123456" });
 
-            var batchCount = 1000;
+            var batchCount = 100;
             int i = 0;
             while (i++ < batchCount)
             {
