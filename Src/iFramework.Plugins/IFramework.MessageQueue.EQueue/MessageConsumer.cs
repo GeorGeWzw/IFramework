@@ -20,10 +20,11 @@ namespace IFramework.MessageQueue.EQueue
         IMessageConsumer, 
         EQueueClients.Consumers.IMessageHandler
     {
+
         public decimal MessageCount { get; protected set; }
         protected string Name { get; set; }
         protected decimal HandledMessageCount { get; set; }
-        protected Consumer Consumer { get; set; }
+        public Consumer Consumer { get; set; }
         protected readonly ILogger _Logger;
 
         public MessageConsumer()
@@ -54,7 +55,8 @@ namespace IFramework.MessageQueue.EQueue
 
         public virtual string GetStatus()
         {
-            return string.Format("{0} Handled command {1}", Name, HandledMessageCount);
+            var queueIDs = string.Join(",", Consumer.GetCurrentQueues().Select(x => x.QueueId));
+            return string.Format("{0} Handled command {1} queueID {2}\r\n", Name, HandledMessageCount, queueIDs);
         }
 
         public virtual void Handle(global::EQueue.Protocols.QueueMessage message)

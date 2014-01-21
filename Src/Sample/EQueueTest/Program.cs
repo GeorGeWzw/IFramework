@@ -17,10 +17,12 @@ using Microsoft.Practices.Unity;
 using System.Threading.Tasks;
 using Sample.Command;
 using System.Threading;
+using EQueue.Infrastructure.IoC;
+using EQueue.Infrastructure.Scheduling;
 
 namespace EQueueTest
 {
-    class Program
+    public class Program
     {
         static ICommandBus commandBus;
         static void Main(string[] args)
@@ -84,9 +86,22 @@ namespace EQueueTest
                                                            producerPort,
                                                            commandHandlerProvider);
 
+                var commandConsumer4 = new CommandConsumer("consumer4", consumerSettings,
+                                                          "CommandConsumerGroup",
+                                                          "Command",
+                                                          consumerSettings.BrokerAddress,
+                                                          producerPort,
+                                                          commandHandlerProvider);
+
+                CommandConsumer.CommandConsumers.Add(commandConsumer1);
+                CommandConsumer.CommandConsumers.Add(commandConsumer2);
+                CommandConsumer.CommandConsumers.Add(commandConsumer3);
+                CommandConsumer.CommandConsumers.Add(commandConsumer4);
+
                 commandConsumer1.Start();
                 commandConsumer2.Start();
                 commandConsumer3.Start();
+                commandConsumer4.Start();
 
                 commandBus = new CommandBus("CommandBus",
                                                         commandHandlerProvider,
@@ -98,12 +113,46 @@ namespace EQueueTest
                                                         "Reply",
                                                         "Command",
                                                         true);
+
                 IoCFactory.Instance.CurrentContainer.RegisterInstance(typeof(ICommandBus),
                                                                       commandBus,
                                                                       new ContainerControlledLifetimeManager());
                 commandBus.Start();
 
-                Thread.Sleep(10000);
+                //Below to wait for consumer balance.
+                var scheduleService = ObjectContainer.Resolve<IScheduleService>();
+                var waitHandle = new ManualResetEvent(false);
+                var taskId = scheduleService.ScheduleTask(() =>
+                {
+                    var bAllocatedQueueIds = (commandBus as CommandBus).Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var c1AllocatedQueueIds = commandConsumer1.Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var c2AllocatedQueueIds = commandConsumer2.Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var c3AllocatedQueueIds = commandConsumer3.Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var c4AllocatedQueueIds = commandConsumer4.Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var eAllocatedQueueIds = (domainEventSubscriber as DomainEventSubscriber).Consumer.GetCurrentQueues().Select(x => x.QueueId);
+
+                    Console.WriteLine(string.Format("Consumer message queue allocation result:bus:{0}, eventSubscriber:{1} c1:{2}, c2:{3}, c3:{4}, c4:{5}",
+                          string.Join(",", bAllocatedQueueIds),
+                          string.Join(",", eAllocatedQueueIds),
+                          string.Join(",", c1AllocatedQueueIds),
+                          string.Join(",", c2AllocatedQueueIds),
+                          string.Join(",", c3AllocatedQueueIds),
+                          string.Join(",", c4AllocatedQueueIds)));
+
+                    if (eAllocatedQueueIds.Count() == 4
+                        && bAllocatedQueueIds.Count() == 4 
+                        && c1AllocatedQueueIds.Count() == 1 
+                        && c2AllocatedQueueIds.Count() == 1 
+                        && c3AllocatedQueueIds.Count() == 1 
+                        && c4AllocatedQueueIds.Count() == 1)
+                    {
+                      
+                        waitHandle.Set();
+                    }
+                }, 1000, 1000);
+
+                waitHandle.WaitOne();
+                scheduleService.ShutdownTask(taskId);
 
                 var worker = new Worker(commandBus);
                 worker.StartTest();
@@ -111,11 +160,9 @@ namespace EQueueTest
 
                 while (true)
                 {
-                    Console.ReadLine();
-                    Console.WriteLine(commandConsumer1.GetStatus());
-                    Console.WriteLine(commandConsumer2.GetStatus());
-                    Console.WriteLine(commandConsumer3.GetStatus());
+                    Console.WriteLine(CommandConsumer.GetConsumersStatus());
                     Console.WriteLine(domainEventSubscriber.GetStatus());
+                    Console.ReadLine();
                 }
 
             }

@@ -40,7 +40,7 @@ namespace EQueueTest
             {
                 return ExceptionManager.Process(() =>
                 {
-                    _CommandBus.Send(command).Wait();
+                    _CommandBus.Send(command);//.Wait();
                 });
             }
         }
@@ -49,26 +49,30 @@ namespace EQueueTest
         {
             batchCommands.ForEach(cmd =>
             {
-                Task.Factory.StartNew(() =>
-                {
-                    Action(cmd);
-                });
+                _CommandBus.Send(cmd);
+                //Task.Factory.StartNew(() =>
+                //{
+                   // Action(cmd);
+                //});
             });
         }
 
         internal void StartTest()
         {
-            var commands = new List<ICommand>();
-            commands.Add(new LoginCommand { UserName = "Ivan", Password = "123456" });
-            commands.Add(new LoginCommand { UserName = "Ivan1", Password = "123456" });
-            commands.Add(new LoginCommand { UserName = "Ivan12", Password = "123456" });
+            Task.Factory.StartNew(() => {
+                var commands = new List<ICommand>();
+                commands.Add(new LoginCommand { UserName = "Ivan", Password = "123456" });
+                commands.Add(new LoginCommand { UserName = "Ivan1", Password = "123456" });
+                commands.Add(new LoginCommand { UserName = "Ivan2", Password = "123456" });
 
-            var batchCount = 100;
-            int i = 0;
-            while (i++ < batchCount)
-            {
-                DoCommand(commands);
-            }
+                var batchCount = 100;
+                int i = 0;
+                while (i++ < batchCount)
+                {
+                    DoCommand(commands);
+                }
+            });
+          
         }
     }
 }

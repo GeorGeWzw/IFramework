@@ -16,6 +16,17 @@ namespace IFramework.MessageQueue.EQueue
 {
     public class CommandConsumer : MessageConsumer<MessageContext>
     {
+        public static List<CommandConsumer> CommandConsumers = new List<CommandConsumer>();
+        public static string GetConsumersStatus()
+        {
+            var status = string.Empty;
+
+            status += CommandConsumer.CommandConsumers[0].GetStatus();
+            status += CommandConsumer.CommandConsumers[1].GetStatus();
+            status += CommandConsumer.CommandConsumers[2].GetStatus();
+            status += CommandConsumer.CommandConsumers[3].GetStatus();
+            return status;
+        }
         protected IHandlerProvider HandlerProvider { get; set; }
         protected Producer Producer { get; set; }
 
@@ -68,12 +79,13 @@ namespace IFramework.MessageQueue.EQueue
             {
                 return;
             }
+            var queueIDs = string.Join(",", Consumer.GetCurrentQueues().Select(x => x.QueueId));
+
+            _Logger.DebugFormat("Start Handle command, commandID:{0} queueID:{1}", messageContext.MessageID, queueIDs);
             var message = messageContext.Message;
             var messageHandlers = HandlerProvider.GetHandlers(message.GetType());
             try
             {
-                _Logger.DebugFormat("Handle command, commandID:{0}", messageContext.MessageID);
-
                 if (messageHandlers.Count == 0)
                 {
                     messageReply = new MessageReply(messageContext.MessageID, new NoHandlerExists());
@@ -97,6 +109,8 @@ namespace IFramework.MessageQueue.EQueue
             {
                 messageContext.ClearItems();
                 OnMessageHandled(messageContext, messageReply);
+                _Logger.DebugFormat("End Handle command, commandID:{0} queueID{1}", messageContext.MessageID, queueIDs);
+
             }
         }
     }
