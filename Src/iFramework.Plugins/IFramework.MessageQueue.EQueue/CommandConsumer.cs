@@ -11,12 +11,14 @@ using IFramework.Infrastructure;
 using IFramework.Infrastructure.Unity.LifetimeManagers;
 using IFramework.UnitOfWork;
 using IFramework.SysException;
+using System.Collections.Concurrent;
 
 namespace IFramework.MessageQueue.EQueue
 {
     public class CommandConsumer : MessageConsumer<MessageContext>
     {
         public static List<CommandConsumer> CommandConsumers = new List<CommandConsumer>();
+        public static ConcurrentDictionary<string, string> _handledCommandDict = new ConcurrentDictionary<string, string>();
         public static string GetConsumersStatus()
         {
             var status = string.Empty;
@@ -79,6 +81,12 @@ namespace IFramework.MessageQueue.EQueue
             {
                 return;
             }
+            var currentName = string.Format("consumer:{0} queueID:{1}", this.Name, queueMessage.QueueId);
+            if (!_handledCommandDict.TryAdd(messageContext.MessageID, currentName))
+            {
+                _Logger.ErrorFormat("Duplicated command [{0}] to be processed in QueueID:{1}.", messageContext.MessageID, currentName);
+            }
+
 
             _Logger.DebugFormat("Start Handle command, commandID:{0} queueID:{1}", messageContext.MessageID, queueMessage.QueueId);
             var message = messageContext.Message;
