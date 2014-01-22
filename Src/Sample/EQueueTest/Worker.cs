@@ -57,7 +57,7 @@ namespace EQueueTest
             });
         }
 
-        internal void StartTest()
+        internal void StartTest(int batchCount)
         {
             Task.Factory.StartNew(() => {
                 var commands = new List<ICommand>();
@@ -66,7 +66,6 @@ namespace EQueueTest
                 commands.Add(new LoginCommand { UserName = "Ivan2", Password = "123456" });
                 commands.Add(new LoginCommand { UserName = "Ivan3", Password = "123456" });
 
-                var batchCount = 100;
                 int i = 0;
                 while (i++ < batchCount)
                 {

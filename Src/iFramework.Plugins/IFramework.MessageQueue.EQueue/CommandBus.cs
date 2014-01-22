@@ -207,17 +207,20 @@ namespace IFramework.MessageQueue.EQueue
             }
 
             var messageBody = Encoding.UTF8.GetBytes(commandContext.ToJson());
-            var sendResult = Producer.Send(new global::EQueue.Protocols.Message(CommandTopic, messageBody), commandKey);
+            Producer.SendAsync(new global::EQueue.Protocols.Message(CommandTopic, messageBody), commandKey)
+                .ContinueWith(task => {
+                    if (task.Result.SendStatus == SendStatus.Success)
+                    {
+                        _Logger.DebugFormat("sent commandID {0}, body: {1}", commandContext.MessageID,
+                                                                        commandContext.Message.ToJson());
+                    }
+                    else
+                    {
+                        _Logger.ErrorFormat("Send Command {0}", task.Result.SendStatus.ToString());
+                    }
+            });
 
-            if (sendResult.SendStatus == SendStatus.Success)
-            {
-                _Logger.DebugFormat("sent commandID {0}, body: {1}", commandContext.MessageID,
-                                                                commandContext.Message.ToJson());
-            }
-            else
-            {
-                _Logger.ErrorFormat("Send Command {0}", sendResult.SendStatus.ToString());
-            }
+           
             return commandState.TaskCompletionSource.Task;
         }
 

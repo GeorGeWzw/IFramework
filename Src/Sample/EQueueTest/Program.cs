@@ -155,14 +155,20 @@ namespace EQueueTest
                 scheduleService.ShutdownTask(taskId);
 
                 var worker = new Worker(commandBus);
-                worker.StartTest();
+                worker.StartTest(100);
 
 
                 while (true)
                 {
                     Console.WriteLine(CommandConsumer.GetConsumersStatus());
                     Console.WriteLine(domainEventSubscriber.GetStatus());
-                    Console.ReadLine();
+                    Console.WriteLine("please input batch count and rerun another test:");
+                    var input = Console.ReadLine();
+                    var batchCount = 0;
+                    if (int.TryParse(input, out batchCount))
+                    {
+                        worker.StartTest(batchCount);
+                    }
                 }
 
             }
