@@ -16,21 +16,21 @@ using EQueue.Protocols;
 
 namespace IFramework.MessageQueue.EQueue
 {
-    public class DomainEventSubscriber : MessageConsumer<MessageContext>
+    public class DomainEventSubscriber : MessageConsumer<IFramework.MessageQueue.MessageFormat.MessageContext>
     {
         IHandlerProvider HandlerProvider { get; set; }
 
-        public DomainEventSubscriber(string name, ConsumerSettings consumerSettings, 
+        public DomainEventSubscriber(string name, ConsumerSetting consumerSettings, 
                                      string groupName, string subscribeTopic,
                                      IHandlerProvider handlerProvider)
-            : base(groupName, consumerSettings, groupName, global::EQueue.Protocols.MessageModel.BroadCasting, subscribeTopic)
+            : base(groupName, consumerSettings, groupName, subscribeTopic)
         {
             HandlerProvider = handlerProvider;
         }
 
-        public override void Handle(global::EQueue.Protocols.QueueMessage message)
+        public override void Handle(QueueMessage message, global::EQueue.Clients.Consumers.IMessageContext context)
         {
-            var messageContexts = message.Body.GetMessage<List<MessageContext>>();
+            var messageContexts = message.Body.GetMessage<List<IFramework.MessageQueue.MessageFormat.MessageContext>>();
             messageContexts.ForEach(messageContext =>
             {
                 ConsumeMessage(messageContext, message);
@@ -38,7 +38,7 @@ namespace IFramework.MessageQueue.EQueue
             });
         }
 
-        protected override void ConsumeMessage(MessageContext messageContext, QueueMessage queueMessage)
+        protected override void ConsumeMessage(IFramework.MessageQueue.MessageFormat.MessageContext messageContext, QueueMessage queueMessage)
         {
 
             _Logger.DebugFormat("Start Handle event , messageContextID:{0} queueID:{1}", messageContext.MessageID, queueMessage.QueueId);

@@ -32,12 +32,12 @@ namespace IFramework.MessageQueue.EQueue
             
         }
 
-        public MessageConsumer(string id, ConsumerSettings consumerSettings, string groupName, MessageModel messageModel, string subscribeTopic)
+        public MessageConsumer(string id, ConsumerSetting consumerSettings, string groupName, string subscribeTopic)
             : this()
         {
             Name = id;
             _Logger = IoCFactory.Resolve<ILoggerFactory>().Create(Name);
-            Consumer = new Consumer(id, consumerSettings, groupName, MessageModel.Clustering, this)
+            Consumer = new Consumer(id, consumerSettings, groupName, this)
                 .Subscribe(subscribeTopic);
         }
 
@@ -59,12 +59,12 @@ namespace IFramework.MessageQueue.EQueue
             return string.Format("{0} Handled command {1} queueID {2}\r\n", Name, HandledMessageCount, queueIDs);
         }
 
-        public virtual void Handle(global::EQueue.Protocols.QueueMessage message)
+        protected abstract void ConsumeMessage(TMessage messageContext, QueueMessage message);
+
+        public virtual void Handle(QueueMessage message, EQueueClients.Consumers.IMessageContext context)
         {
             ConsumeMessage(message.Body.GetMessage<TMessage>(), message);
             HandledMessageCount++;
         }
-
-        protected abstract void ConsumeMessage(TMessage messageContext, QueueMessage message);
     }
 }

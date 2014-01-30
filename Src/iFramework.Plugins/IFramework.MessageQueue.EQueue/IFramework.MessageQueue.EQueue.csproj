@@ -33,21 +33,25 @@
     <Reference Include="Autofac">
       <HintPath>..\..\packages\Autofac.3.3.0\lib\net40\Autofac.dll</HintPath>
     </Reference>
+    <Reference Include="ECommon, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>EQueueRefs\ECommon.dll</HintPath>
+    </Reference>
+    <Reference Include="ECommon.Autofac, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>EQueueRefs\ECommon.Autofac.dll</HintPath>
+    </Reference>
+    <Reference Include="ECommon.JsonNet, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>EQueueRefs\ECommon.JsonNet.dll</HintPath>
+    </Reference>
+    <Reference Include="ECommon.Log4Net, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>EQueueRefs\ECommon.Log4Net.dll</HintPath>
+    </Reference>
     <Reference Include="EQueue, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>EQueueRefs\EQueue.dll</HintPath>
-    </Reference>
-    <Reference Include="EQueue.Autofac, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>EQueueRefs\EQueue.Autofac.dll</HintPath>
-    </Reference>
-    <Reference Include="EQueue.JsonNet, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>EQueueRefs\EQueue.JsonNet.dll</HintPath>
-    </Reference>
-    <Reference Include="EQueue.Log4Net, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>EQueueRefs\EQueue.Log4Net.dll</HintPath>
     </Reference>
     <Reference Include="log4net">
       <HintPath>..\..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
@@ -88,11 +92,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="EQueueRefs\EQueue.Autofac.dll" />
-    <None Include="EQueueRefs\EQueue.dll" />
-    <None Include="EQueueRefs\EQueue.JsonNet.dll" />
-    <None Include="EQueueRefs\EQueue.Log4Net.dll" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="EQueueRefs\ECommon.Autofac.dll" />
+    <Content Include="EQueueRefs\ECommon.dll" />
+    <Content Include="EQueueRefs\ECommon.JsonNet.dll" />
+    <Content Include="EQueueRefs\ECommon.Log4Net.dll" />
+    <Content Include="EQueueRefs\EQueue.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

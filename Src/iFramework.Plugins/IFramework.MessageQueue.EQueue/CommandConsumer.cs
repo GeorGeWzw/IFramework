@@ -15,7 +15,7 @@ using System.Collections.Concurrent;
 
 namespace IFramework.MessageQueue.EQueue
 {
-    public class CommandConsumer : MessageConsumer<MessageContext>
+    public class CommandConsumer : MessageConsumer<IFramework.MessageQueue.MessageFormat.MessageContext>
     {
         public static List<CommandConsumer> CommandConsumers = new List<CommandConsumer>();
         public static ConcurrentDictionary<string, string> _handledCommandDict = new ConcurrentDictionary<string, string>();
@@ -32,13 +32,16 @@ namespace IFramework.MessageQueue.EQueue
         protected IHandlerProvider HandlerProvider { get; set; }
         protected Producer Producer { get; set; }
 
-        public CommandConsumer(string name, ConsumerSettings consumerSettings, string groupName,
+        public CommandConsumer(string name, ConsumerSetting consumerSettings, string groupName,
                                string subscribeTopic,  string brokerAddress, int producerBrokerPort,
                                IHandlerProvider handlerProvider)
-            : base(name, consumerSettings, groupName, MessageModel.Clustering, subscribeTopic)
+            : base(name, consumerSettings, groupName, subscribeTopic)
         {
             HandlerProvider = handlerProvider;
-            Producer = new Producer(brokerAddress, producerBrokerPort);
+            var producerSetting = ProducerSetting.Default;
+            producerSetting.BrokerAddress = brokerAddress;
+            producerSetting.BrokerPort = producerBrokerPort;
+            Producer = new Producer(producerSetting);
         }
 
         public override void Start()
@@ -54,7 +57,7 @@ namespace IFramework.MessageQueue.EQueue
             }
         }
 
-        void OnMessageHandled(IMessageContext messageContext, IMessageReply reply)
+        void OnMessageHandled(IFramework.Message.IMessageContext messageContext, IMessageReply reply)
         {
             if (!string.IsNullOrWhiteSpace(messageContext.ReplyToEndPoint))
             {
@@ -74,7 +77,7 @@ namespace IFramework.MessageQueue.EQueue
             }
         }
 
-        protected override void ConsumeMessage(MessageContext messageContext, QueueMessage queueMessage)
+        protected override void ConsumeMessage(IFramework.MessageQueue.MessageFormat.MessageContext messageContext, QueueMessage queueMessage)
         {
             IMessageReply messageReply = null;
             if (messageContext == null || messageContext.Message == null)

@@ -21,14 +21,15 @@ namespace IFramework.MessageQueue.EQueue
         protected Producer Producer { get; set; }
         protected string Topic { get; set; }
 
-        public EventPublisher(string topic, string brokerAddress, int brokerPort)
+        public EventPublisher(string topic, ProducerSetting producerSetting)
         {
             Topic = topic;
             _Logger = IoCFactory.Resolve<ILoggerFactory>().Create(this.GetType());
             MessageQueue = new BlockingCollection<IMessageContext>();
             try
             {
-                Producer = new Producer(brokerAddress, brokerPort);
+
+                Producer = new Producer(producerSetting);
                 Producer.Start();
             }
             catch (Exception ex)

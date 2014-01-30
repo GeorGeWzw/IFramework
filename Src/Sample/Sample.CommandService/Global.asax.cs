@@ -15,10 +15,16 @@ using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
-using EQueue.Autofac;
-using EQueue.Log4Net;
-using EQueue.JsonNet;
+using ECommon.Autofac;
+using ECommon.Log4Net;
+using ECommon.JsonNet;
 using EQueue.Broker;
+using ECommon.Configurations;
+using EQueue.Clients.Producers;
+using EQueue.Configurations;
+using ECommon.IoC;
+using ECommon.Scheduling;
+using System.Threading;
 
 namespace Sample.CommandService
 {
@@ -96,21 +102,20 @@ namespace Sample.CommandService
         {
             try
             {
-                Configuration.Instance.UseLog4Net();
-
-                Configuration.Instance
+                IFramework.Config.Configuration.Instance.UseLog4Net()
                              .CommandHandlerProviderBuild(null, "CommandHandlers")
                              .RegisterMvc();
 
-                global::EQueue.Configuration
+                global::ECommon.Configurations.Configuration
                 .Create()
                 .UseAutofac()
+                .RegisterCommonComponents()
                 .UseLog4Net()
                 .UseJsonNet()
-                .RegisterFrameworkComponents();
+                .RegisterEQueueComponents();
 
                 new BrokerController().Initialize().Start();
-                var consumerSettings = ConsumerSettings.Default;
+                var consumerSettings = ConsumerSetting.Default;
                 consumerSettings.MessageHandleMode = MessageHandleMode.Sequential;
                 var producerPort = 5000;
 
@@ -124,9 +129,11 @@ namespace Sample.CommandService
                 domainEventSubscriber.Start();
                 IoCFactory.Instance.CurrentContainer.RegisterInstance("DomainEventConsumer", domainEventSubscriber);
 
-                IEventPublisher eventPublisher = new EventPublisher("domainevent",
-                                                                  consumerSettings.BrokerAddress,
-                                                                  producerPort);
+
+                var producerSetting = ProducerSetting.Default;
+                producerSetting.BrokerPort = 5000;
+
+                IEventPublisher eventPublisher = new EventPublisher("domainevent", producerSetting);
                 IoCFactory.Instance.CurrentContainer.RegisterInstance(typeof(IEventPublisher),
                                                                       eventPublisher,
                                                                       new ContainerControlledLifetimeManager());
@@ -154,13 +161,21 @@ namespace Sample.CommandService
                                                            producerPort,
                                                            commandHandlerProvider);
 
+                var commandConsumer4 = new CommandConsumer("consumer4", consumerSettings,
+                                                      "CommandConsumerGroup",
+                                                      "Command",
+                                                      consumerSettings.BrokerAddress,
+                                                      producerPort,
+                                                      commandHandlerProvider);
                 commandConsumer1.Start();
                 commandConsumer2.Start();
                 commandConsumer3.Start();
+                commandConsumer4.Start();
 
                 CommandConsumers.Add(commandConsumer1);
                 CommandConsumers.Add(commandConsumer2);
                 CommandConsumers.Add(commandConsumer3);
+                CommandConsumers.Add(commandConsumer4);
 
                 ICommandBus commandBus = new CommandBus("CommandBus",
                                                         commandHandlerProvider,
@@ -176,6 +191,44 @@ namespace Sample.CommandService
                                                                       commandBus,
                                                                       new ContainerControlledLifetimeManager());
                 commandBus.Start();
+
+
+                //Below to wait for consumer balance.
+                var scheduleService = ObjectContainer.Resolve<IScheduleService>();
+                var waitHandle = new ManualResetEvent(false);
+                var taskId = scheduleService.ScheduleTask(() =>
+                {
+                    var bAllocatedQueueIds = (commandBus as CommandBus).Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var c1AllocatedQueueIds = commandConsumer1.Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var c2AllocatedQueueIds = commandConsumer2.Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var c3AllocatedQueueIds = commandConsumer3.Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var c4AllocatedQueueIds = commandConsumer4.Consumer.GetCurrentQueues().Select(x => x.QueueId);
+                    var eAllocatedQueueIds = (domainEventSubscriber as DomainEventSubscriber).Consumer.GetCurrentQueues().Select(x => x.QueueId);
+
+                    Console.WriteLine(string.Format("Consumer message queue allocation result:bus:{0}, eventSubscriber:{1} c1:{2}, c2:{3}, c3:{4}, c4:{5}",
+                          string.Join(",", bAllocatedQueueIds),
+                          string.Join(",", eAllocatedQueueIds),
+                          string.Join(",", c1AllocatedQueueIds),
+                          string.Join(",", c2AllocatedQueueIds),
+                          string.Join(",", c3AllocatedQueueIds),
+                          string.Join(",", c4AllocatedQueueIds)));
+
+                    if (eAllocatedQueueIds.Count() == 4
+                        && bAllocatedQueueIds.Count() == 4
+                        && c1AllocatedQueueIds.Count() == 1
+                        && c2AllocatedQueueIds.Count() == 1
+                        && c3AllocatedQueueIds.Count() == 1
+                        && c4AllocatedQueueIds.Count() == 1)
+                    {
+
+                        waitHandle.Set();
+                    }
+                }, 1000, 1000);
+
+                waitHandle.WaitOne();
+                scheduleService.ShutdownTask(taskId);
+
+
 
                 AreaRegistration.RegisterAllAreas();
                 WebApiConfig.Register(GlobalConfiguration.Configuration);

@@ -29,7 +29,6 @@ namespace IFramework.MessageQueue.EQueue
         protected string CommandTopic { get; set; }
         protected string ReplyTopic { get; set; }
         protected Producer Producer { get; set; }
-        protected BlockingCollection<MessageState> CommandQueue { get; set; }
         IMessageStore _MessageStore;
         protected IMessageStore MessageStore
         {
@@ -45,21 +44,23 @@ namespace IFramework.MessageQueue.EQueue
                           ILinearCommandManager linearCommandManager,
                           string brokerAddress,
                           int producerBrokerPort,
-                          ConsumerSettings consumerSettings,
+                          ConsumerSetting consumerSettings,
                           string groupName,
                           string replyTopic,
                           string commandTopic,
                           bool inProc)
-            : base(name, consumerSettings, groupName, MessageModel.Clustering, replyTopic)
+            : base(name, consumerSettings, groupName, replyTopic)
         {
             MessageStateQueue = Hashtable.Synchronized(new Hashtable());
-            CommandQueue = new BlockingCollection<MessageState>();
             HandlerProvider = handlerProvider;
             LinearCommandManager = linearCommandManager;
             CommandTopic = commandTopic;
             ReplyTopic = replyTopic;
             InProc = inProc;
-            Producer = new Producer(brokerAddress, producerBrokerPort);
+            var producerSetting = ProducerSetting.Default;
+            producerSetting.BrokerAddress = brokerAddress;
+            producerSetting.BrokerPort = producerBrokerPort;
+            Producer = new Producer(producerSetting);
         }
 
         public override void Start()
@@ -68,37 +69,10 @@ namespace IFramework.MessageQueue.EQueue
             try
             {
                 Producer.Start();
-                Task.Factory.StartNew(SendCommand);
             }
             catch (Exception ex)
             {
                 _Logger.Error(ex.GetBaseException().Message, ex);
-            }
-        }
-
-        private void SendCommand()
-        {
-            while (true)
-            {
-                var commandState = CommandQueue.Take();
-                var commandKey = commandState.MessageContext.Key;
-
-                if (string.IsNullOrWhiteSpace(commandKey))
-                {
-                    commandKey = commandState.MessageID;
-                }
-
-                var messageBody = Encoding.UTF8.GetBytes(commandState.MessageContext.ToJson());
-                var sendResult = Producer.Send(new global::EQueue.Protocols.Message(CommandTopic, messageBody), commandKey);
-
-                if (sendResult.SendStatus == SendStatus.Success)
-                {
-                    _Logger.DebugFormat("sent commandID {0}", commandState.MessageContext.MessageID);
-                }
-                else
-                {
-                    _Logger.ErrorFormat("Send Command {0}", sendResult.SendStatus.ToString());
-                }
             }
         }
 
@@ -127,7 +101,7 @@ namespace IFramework.MessageQueue.EQueue
 
 
 
-        protected MessageState BuildMessageState(IMessageContext messageContext, CancellationToken cancellationToken)
+        protected MessageState BuildMessageState(IFramework.Message.IMessageContext messageContext, CancellationToken cancellationToken)
         {
             var pendingRequestsCts = new CancellationTokenSource();
             CancellationTokenSource linkedCts = CancellationTokenSource
@@ -163,7 +137,7 @@ namespace IFramework.MessageQueue.EQueue
             {
                 commandKey = LinearCommandManager.GetLinearKey(command as ILinearCommand).ToString();
             }
-            IMessageContext commandContext = new MessageContext(command, ReplyTopic, commandKey);
+            IFramework.Message.IMessageContext commandContext = new IFramework.MessageQueue.MessageFormat.MessageContext(command, ReplyTopic, commandKey);
 
             Task task = null;
             if (InProc && currentMessageContext == null)
@@ -182,7 +156,7 @@ namespace IFramework.MessageQueue.EQueue
             return task;
         }
 
-        protected virtual Task SendInProc(IMessageContext commandContext, CancellationToken cancellationToken)
+        protected virtual Task SendInProc(IFramework.Message.IMessageContext commandContext, CancellationToken cancellationToken)
         {
             Task task = null;
             var command = commandContext.Message as ICommand;
@@ -222,14 +196,35 @@ namespace IFramework.MessageQueue.EQueue
             return task;
         }
 
-        protected virtual Task SendAsync(IMessageContext commandContext, CancellationToken cancellationToken)
+        protected virtual Task SendAsync(IFramework.Message.IMessageContext commandContext, CancellationToken cancellationToken)
         {
             var command = commandContext.Message as ICommand;
             MessageState commandState = BuildMessageState(commandContext, cancellationToken);
             commandState.CancellationToken.Register(onCancel, commandState);
             MessageStateQueue.Add(commandState.MessageID, commandState);
+            var commandKey = commandState.MessageContext.Key;
 
-            CommandQueue.Add(commandState);
+            if (string.IsNullOrWhiteSpace(commandKey))
+            {
+                commandKey = commandState.MessageID;
+            }
+
+            var messageBody = Encoding.UTF8.GetBytes(commandContext.ToJson());
+            Producer.SendAsync(new global::EQueue.Protocols.Message(CommandTopic, messageBody), commandKey)
+                .ContinueWith(task =>
+                {
+                    if (task.Result.SendStatus == SendStatus.Success)
+                    {
+                        _Logger.DebugFormat("sent commandID {0}, body: {1}", commandContext.MessageID,
+                                                                        commandContext.Message.ToJson());
+                    }
+                    else
+                    {
+                        _Logger.ErrorFormat("Send Command {0}", task.Result.SendStatus.ToString());
+                    }
+                });
+
+
             return commandState.TaskCompletionSource.Task;
         }
 
