@@ -114,7 +114,9 @@ namespace Sample.CommandService
                 .UseJsonNet()
                 .RegisterEQueueComponents();
 
-                new BrokerController().Initialize().Start();
+                var brokerSetting = BrokerSetting.Default;
+                brokerSetting.NotifyWhenMessageArrived = true;
+                new BrokerController(brokerSetting).Initialize().Start();
                 var consumerSettings = ConsumerSetting.Default;
                 consumerSettings.MessageHandleMode = MessageHandleMode.Sequential;
                 var producerPort = 5000;
