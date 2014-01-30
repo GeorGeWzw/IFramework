@@ -60,10 +60,12 @@ namespace Sample.CommandService.Controllers
                 try
                 {
                     var commands = new List<ICommand>(BatchCommands);
-                    while (i++ < batchCount)
-                    {
-                        DoCommand(commands);
-                    }
+                    Task.Factory.StartNew(() => {
+                        while (i++ < batchCount)
+                        {
+                            DoCommand(commands);
+                        }
+                    });
                 }
                 catch (Exception e)
                 {

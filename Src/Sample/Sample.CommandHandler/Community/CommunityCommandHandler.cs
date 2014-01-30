@@ -25,17 +25,17 @@ namespace Sample.CommandHandler.Community
 
         public void Handle(LoginCommand command)
         {
-            //var account = DomainRepository.Find<Account>(a => a.UserName.Equals(command.UserName)
-            //                                                          && a.Password.Equals(command.Password));
+            var account = DomainRepository.Find<Account>(a => a.UserName.Equals(command.UserName)
+                                                                      && a.Password.Equals(command.Password));
 
-            ////(DomainRepository as Framework.EntityFramework.Repositories.IMergeOptionChangable)
-            ////    .ChangeMergeOption<Account>(MergeOption.OverwriteChanges);
+            //(DomainRepository as Framework.EntityFramework.Repositories.IMergeOptionChangable)
+            //    .ChangeMergeOption<Account>(MergeOption.OverwriteChanges);
 
-            //if (account == null)
-            //{
-            //    throw new SysException(ErrorCode.WrongUsernameOrPassword);
-            //}
-            var account = new Account();
+            if (account == null)
+            {
+                throw new SysException(ErrorCode.WrongUsernameOrPassword);
+            }
+            //var account = new Account();
             account.Login();
             command.Result = new DTO.Account
             {
