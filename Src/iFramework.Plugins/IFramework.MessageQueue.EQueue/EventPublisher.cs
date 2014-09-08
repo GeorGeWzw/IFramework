@@ -7,10 +7,10 @@ using IFramework.Infrastructure;
 using IFramework.Message.Impl;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
-using EQueue.Clients.Producers;
 using IFramework.Infrastructure.Logging;
 using IFramework.Message;
 using IFramework.MessageQueue.MessageFormat;
+using EQueueClientsProducers = EQueue.Clients.Producers;
 
 namespace IFramework.MessageQueue.EQueue
 {
@@ -18,18 +18,20 @@ namespace IFramework.MessageQueue.EQueue
     {
         protected ILogger _Logger;
         protected BlockingCollection<IMessageContext> MessageQueue { get; set; }
-        protected Producer Producer { get; set; }
+        protected EQueueClientsProducers.Producer Producer { get; set; }
+        protected string Id { get; set; }
         protected string Topic { get; set; }
 
-        public EventPublisher(string topic, ProducerSetting producerSetting)
+        public EventPublisher(string id, string topic, EQueueClientsProducers.ProducerSetting producerSetting)
         {
             Topic = topic;
+            Id = id;
             _Logger = IoCFactory.Resolve<ILoggerFactory>().Create(this.GetType());
             MessageQueue = new BlockingCollection<IMessageContext>();
             try
             {
 
-                Producer = new Producer(producerSetting);
+                Producer = new EQueueClientsProducers.Producer(id, producerSetting);
                 Producer.Start();
             }
             catch (Exception ex)
@@ -48,7 +50,7 @@ namespace IFramework.MessageQueue.EQueue
             });
             var messageBody = messageContexts.GetMessageBytes();
             var sendResult = Producer.Send(new global::EQueue.Protocols.Message(Topic, messageBody), string.Empty);
-            if (sendResult.SendStatus == SendStatus.Success)
+            if (sendResult.SendStatus == EQueueClientsProducers.SendStatus.Success)
             {
                 _Logger.DebugFormat("publish {0} events success, body {1}", 
                                      messageContexts.Count, messageContexts.ToJson());

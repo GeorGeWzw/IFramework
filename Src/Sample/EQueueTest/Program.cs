@@ -1,13 +1,9 @@
 ﻿using EQueue.Broker;
 using EQueue.Clients.Consumers;
-using IFramework.Config;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using EQueue.Autofac;
-using EQueue.Log4Net;
-using EQueue.JsonNet;
 using IFramework.Infrastructure;
 using IFramework.Message;
 using IFramework.MessageQueue.EQueue;
@@ -17,79 +13,78 @@ using Microsoft.Practices.Unity;
 using System.Threading.Tasks;
 using Sample.Command;
 using System.Threading;
-using EQueue.Infrastructure.IoC;
-using EQueue.Infrastructure.Scheduling;
+using IFramework.Config;
+using IFramework.Log4Net;
+using IFramework.Infrastructure.Logging;
+using EQueue.Clients.Producers;
+using ECommon.Scheduling;
+using ECommon.Components;
 
 namespace EQueueTest
 {
     public class Program
     {
         static ICommandBus commandBus;
+        static ILogger _logger;
+         
         static void Main(string[] args)
         {
             try
             {
-                Configuration.Instance.UseLog4Net();
 
-                Configuration.Instance
-                             .CommandHandlerProviderBuild(null, "CommandHandlers");
+                Configuration.Instance.UseLog4Net()
+                                      .InitliaizeEQueue()
+                                      .CommandHandlerProviderBuild(null, "CommandHandlers");
 
-                global::EQueue.Configuration
-                .Create()
-                .UseAutofac()
-                .UseLog4Net()
-                .UseJsonNet()
-                .RegisterFrameworkComponents();
+                var consumerSetting = new ConsumerSetting();
+                consumerSetting.MessageHandleMode = MessageHandleMode.Sequential;
+                consumerSetting.BrokerPort = 5001;
 
-                new BrokerController().Initialize().Start();
-                var consumerSettings = ConsumerSettings.Default;
-                consumerSettings.MessageHandleMode = MessageHandleMode.Sequential;
-                var producerPort = 5000;
-
+                var producerSetting = new ProducerSetting();
+                var producerPort = producerSetting.BrokerPort = 5000;
 
                 var eventHandlerProvider = IoCFactory.Resolve<IHandlerProvider>("AsyncDomainEventSubscriber");
                 IMessageConsumer domainEventSubscriber = new DomainEventSubscriber("domainEventSubscriber1",
-                                                                                   consumerSettings,
+                                                                                   consumerSetting,
                                                                                    "DomainEventSubscriber",
                                                                                    "domainevent",
                                                                                    eventHandlerProvider);
                 domainEventSubscriber.Start();
                 IoCFactory.Instance.CurrentContainer.RegisterInstance("DomainEventConsumer", domainEventSubscriber);
 
-                IEventPublisher eventPublisher = new EventPublisher("domainevent",
-                                                                  consumerSettings.BrokerAddress,
-                                                                  producerPort);
+                IEventPublisher eventPublisher = new EventPublisher("EventPublisher", "domainevent",
+                                                                  producerSetting);
                 IoCFactory.Instance.CurrentContainer.RegisterInstance(typeof(IEventPublisher),
                                                                       eventPublisher,
                                                                       new ContainerControlledLifetimeManager());
 
 
                 var commandHandlerProvider = IoCFactory.Resolve<ICommandHandlerProvider>();
-                var commandConsumer1 = new CommandConsumer("consumer1", consumerSettings,
+                var commandConsumer1 = new CommandConsumer("consumer1", consumerSetting,
                                                            "CommandConsumerGroup",
                                                            "Command",
-                                                           consumerSettings.BrokerAddress,
+                                                           consumerSetting.BrokerAddress,
                                                            producerPort,
                                                            commandHandlerProvider);
 
-                var commandConsumer2 = new CommandConsumer("consumer2", consumerSettings,
+                var commandConsumer2 = new CommandConsumer("consumer2", consumerSetting,
                                                            "CommandConsumerGroup",
                                                            "Command",
-                                                           consumerSettings.BrokerAddress,
+                                                           consumerSetting.BrokerAddress,
                                                            producerPort,
                                                            commandHandlerProvider);
 
-                var commandConsumer3 = new CommandConsumer("consumer3", consumerSettings,
+                var commandConsumer3 = new CommandConsumer("consumer3", consumerSetting,
                                                            "CommandConsumerGroup",
                                                            "Command",
-                                                           consumerSettings.BrokerAddress,
+                                                           consumerSetting.BrokerAddress,
                                                            producerPort,
                                                            commandHandlerProvider);
 
-                var commandConsumer4 = new CommandConsumer("consumer4", consumerSettings,
+                var commandConsumer4 = new CommandConsumer("consumer4", consumerSetting,
                                                           "CommandConsumerGroup",
                                                           "Command",
-                                                          consumerSettings.BrokerAddress,
+                                                          consumerSetting.BrokerAddress,
                                                           producerPort,
                                                           commandHandlerProvider);
 
@@ -106,9 +101,9 @@ namespace EQueueTest
                 commandBus = new CommandBus("CommandBus",
                                                         commandHandlerProvider,
                                                         IoCFactory.Resolve<ILinearCommandManager>(),
-                                                        consumerSettings.BrokerAddress,
+                                                        consumerSetting.BrokerAddress,
                                                         producerPort,
-                                                        consumerSettings,
+                                                        consumerSetting,
                                                         "CommandBus",
                                                         "Reply",
                                                         "Command",
@@ -122,7 +117,7 @@ namespace EQueueTest
                 //Below to wait for consumer balance.
                 var scheduleService = ObjectContainer.Resolve<IScheduleService>();
                 var waitHandle = new ManualResetEvent(false);
-                var taskId = scheduleService.ScheduleTask(() =>
+                var taskId = scheduleService.ScheduleTask("consumer logs", () =>
                 {
                     var bAllocatedQueueIds = (commandBus as CommandBus).Consumer.GetCurrentQueues().Select(x => x.QueueId);
                     var c1AllocatedQueueIds = commandConsumer1.Consumer.GetCurrentQueues().Select(x => x.QueueId);
@@ -175,6 +170,10 @@ namespace EQueueTest
             catch (Exception ex)
             {
                 Console.WriteLine(ex.GetBaseException().Message, ex);
+            }
+            finally
+            {
+                Console.Read();
             }
         }
     }

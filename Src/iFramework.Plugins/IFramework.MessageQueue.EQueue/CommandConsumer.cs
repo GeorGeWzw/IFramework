@@ -1,7 +1,4 @@
-﻿using EQueue.Clients.Consumers;
-using EQueue.Clients.Producers;
-using EQueue.Protocols;
-using IFramework.Message;
+﻿using IFramework.Message;
 using IFramework.MessageQueue.MessageFormat;
 using System;
 using System.Collections.Generic;
@@ -12,6 +9,9 @@ using IFramework.Infrastructure.Unity.LifetimeManagers;
 using IFramework.UnitOfWork;
 using IFramework.SysException;
 using System.Collections.Concurrent;
+using EQueueClientsProducers = EQueue.Clients.Producers;
+using EQueueClientsConsumers = EQueue.Clients.Consumers;
+using EQueueProtocols = EQueue.Protocols;
 
 namespace IFramework.MessageQueue.EQueue
 {
@@ -30,18 +30,18 @@ namespace IFramework.MessageQueue.EQueue
             return status;
         }
         protected IHandlerProvider HandlerProvider { get; set; }
-        protected Producer Producer { get; set; }
+        protected EQueueClientsProducers.Producer Producer { get; set; }
 
-        public CommandConsumer(string name, ConsumerSetting consumerSettings, string groupName,
+        public CommandConsumer(string name, EQueueClientsConsumers.ConsumerSetting consumerSetting, string groupName,
                                string subscribeTopic,  string brokerAddress, int producerBrokerPort,
                                IHandlerProvider handlerProvider)
-            : base(name, consumerSettings, groupName, subscribeTopic)
+            : base(name, consumerSetting, groupName, subscribeTopic)
         {
             HandlerProvider = handlerProvider;
-            var producerSetting = ProducerSetting.Default;
+            var producerSetting = new EQueueClientsProducers.ProducerSetting();
             producerSetting.BrokerAddress = brokerAddress;
             producerSetting.BrokerPort = producerBrokerPort;
-            Producer = new Producer(producerSetting);
+            Producer = new EQueueClientsProducers.Producer(string.Format("{0}-Reply-Producer", name), producerSetting);
         }
 
         public override void Start()
@@ -64,7 +64,7 @@ namespace IFramework.MessageQueue.EQueue
                 var messageBody = reply.GetMessageBytes();
                 Producer.SendAsync(new global::EQueue.Protocols.Message(messageContext.ReplyToEndPoint, messageBody), string.Empty)
                         .ContinueWith(task => {
-                            if (task.Result.SendStatus ==  SendStatus.Success)
+                            if (task.Result.SendStatus == EQueueClientsProducers.SendStatus.Success)
                             {
                                 _Logger.DebugFormat("send reply, commandID:{0}", reply.MessageID);
                             }
@@ -77,7 +77,7 @@ namespace IFramework.MessageQueue.EQueue
             }
         }
 
-        protected override void ConsumeMessage(IFramework.MessageQueue.MessageFormat.MessageContext messageContext, QueueMessage queueMessage)
+        protected override void ConsumeMessage(IFramework.MessageQueue.MessageFormat.MessageContext messageContext, EQueueProtocols.QueueMessage queueMessage)
         {
             IMessageReply messageReply = null;
             if (messageContext == null || messageContext.Message == null)

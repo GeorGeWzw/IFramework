@@ -33,20 +33,32 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Autofac">
-      <HintPath>..\..\packages\Autofac.3.3.0\lib\net40\Autofac.dll</HintPath>
+      <HintPath>..\..\packages\Autofac.3.4.0\lib\net40\Autofac.dll</HintPath>
     </Reference>
-    <Reference Include="EQueue, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="ECommon">
+      <HintPath>..\..\packages\ECommon.1.3.5\lib\net40\ECommon.dll</HintPath>
+    </Reference>
+    <Reference Include="ECommon.Autofac">
+      <HintPath>..\..\packages\ECommon.Autofac.1.3.5\lib\net40\ECommon.Autofac.dll</HintPath>
+    </Reference>
+    <Reference Include="ECommon.JsonNet">
+      <HintPath>..\..\packages\ECommon.JsonNet.1.3.5\lib\net40\ECommon.JsonNet.dll</HintPath>
+    </Reference>
+    <Reference Include="ECommon.Log4Net">
+      <HintPath>..\..\packages\ECommon.Log4Net.1.3.5\lib\net40\ECommon.Log4Net.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\iFramework.Plugins\IFramework.MessageQueue.EQueue\EQueueRefs\EQueue.dll</HintPath>
+      <HintPath>..\..\packages\EntityFramework.6.0.2\lib\net40\EntityFramework.dll</HintPath>
     </Reference>
-    <Reference Include="EQueue.Autofac">
-      <HintPath>..\..\iFramework.Plugins\IFramework.MessageQueue.EQueue\EQueueRefs\EQueue.Autofac.dll</HintPath>
+    <Reference Include="EntityFramework.SqlServer">
+      <HintPath>..\..\packages\EntityFramework.6.0.2\lib\net40\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
-    <Reference Include="EQueue.JsonNet">
-      <HintPath>..\..\iFramework.Plugins\IFramework.MessageQueue.EQueue\EQueueRefs\EQueue.JsonNet.dll</HintPath>
+    <Reference Include="EQueue">
+      <HintPath>..\..\packages\EQueue.1.2.8\lib\net40\EQueue.dll</HintPath>
     </Reference>
-    <Reference Include="EQueue.Log4Net">
-      <HintPath>..\..\iFramework.Plugins\IFramework.MessageQueue.EQueue\EQueueRefs\EQueue.Log4Net.dll</HintPath>
+    <Reference Include="log4net">
+      <HintPath>..\..\packages\log4net.2.0.3\lib\net40-full\log4net.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Practices.ServiceLocation">
       <HintPath>..\..\packages\CommonServiceLocator.1.0\lib\NET35\Microsoft.Practices.ServiceLocation.dll</HintPath>
@@ -59,7 +71,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Unity.2.1.505.2\lib\NET35\Microsoft.Practices.Unity.Configuration.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.5.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -121,6 +137,10 @@
     <ProjectReference Include="..\Sample.DTO\Sample.DTO.csproj">
       <Project>{279b5ee0-22ca-4672-be92-9b6658dcdae3}</Project>
       <Name>Sample.DTO</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Sample.Persistence\Sample.Persistence.csproj">
+      <Project>{07b18368-3d3f-4c12-b2f1-e38fc709226a}</Project>
+      <Name>Sample.Persistence</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

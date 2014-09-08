@@ -22,7 +22,6 @@ using EQueue.Broker;
 using ECommon.Configurations;
 using EQueue.Clients.Producers;
 using EQueue.Configurations;
-using ECommon.IoC;
 using ECommon.Scheduling;
 using System.Threading;
 

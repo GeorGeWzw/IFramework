@@ -15,9 +15,9 @@ using IFramework.UnitOfWork;
 using IFramework.Config;
 using System.Collections.Concurrent;
 using IFramework.MessageQueue.MessageFormat;
-using EQueue.Protocols;
-using EQueue.Clients.Producers;
-using EQueue.Clients.Consumers;
+using EQueueClientsProducers = EQueue.Clients.Producers;
+using EQueueClientsConsumers = EQueue.Clients.Consumers;
+using EQueueProtocols = EQueue.Protocols;
 
 namespace IFramework.MessageQueue.EQueue
 {
@@ -28,7 +28,7 @@ namespace IFramework.MessageQueue.EQueue
         protected Hashtable MessageStateQueue { get; set; }
         protected string CommandTopic { get; set; }
         protected string ReplyTopic { get; set; }
-        protected Producer Producer { get; set; }
+        protected EQueueClientsProducers.Producer Producer { get; set; }
         IMessageStore _MessageStore;
         protected IMessageStore MessageStore
         {
@@ -44,12 +44,12 @@ namespace IFramework.MessageQueue.EQueue
                           ILinearCommandManager linearCommandManager,
                           string brokerAddress,
                           int producerBrokerPort,
-                          ConsumerSetting consumerSettings,
+                          EQueueClientsConsumers.ConsumerSetting consumerSetting,
                           string groupName,
                           string replyTopic,
                           string commandTopic,
                           bool inProc)
-            : base(name, consumerSettings, groupName, replyTopic)
+            : base(name, consumerSetting, groupName, replyTopic)
         {
             MessageStateQueue = Hashtable.Synchronized(new Hashtable());
             HandlerProvider = handlerProvider;
@@ -57,10 +57,10 @@ namespace IFramework.MessageQueue.EQueue
             CommandTopic = commandTopic;
             ReplyTopic = replyTopic;
             InProc = inProc;
-            var producerSetting = ProducerSetting.Default;
+            var producerSetting = new EQueueClientsProducers.ProducerSetting();
             producerSetting.BrokerAddress = brokerAddress;
             producerSetting.BrokerPort = producerBrokerPort;
-            Producer = new Producer(producerSetting);
+            Producer = new EQueueClientsProducers.Producer(string.Format("{0}-Reply-Producer", name), producerSetting);
         }
 
         public override void Start()
@@ -76,7 +76,7 @@ namespace IFramework.MessageQueue.EQueue
             }
         }
 
-        protected override void ConsumeMessage(MessageReply reply, QueueMessage queueMessage)
+        protected override void ConsumeMessage(MessageReply reply, EQueueProtocols.QueueMessage queueMessage)
         {
             _Logger.DebugFormat("Handle reply:{0} content:{1}", reply.MessageID, reply.ToJson());
             var messageState = MessageStateQueue[reply.MessageID] as MessageState;
@@ -213,7 +213,7 @@ namespace IFramework.MessageQueue.EQueue
             Producer.SendAsync(new global::EQueue.Protocols.Message(CommandTopic, messageBody), commandKey)
                 .ContinueWith(task =>
                 {
-                    if (task.Result.SendStatus == SendStatus.Success)
+                    if (task.Result.SendStatus == EQueueClientsProducers.SendStatus.Success)
                     {
                         _Logger.DebugFormat("sent commandID {0}, body: {1}", commandContext.MessageID,
                                                                         commandContext.Message.ToJson());

@@ -11,8 +11,8 @@ using IFramework.UnitOfWork;
 using IFramework.Message.Impl;
 using IFramework.Infrastructure.Unity.LifetimeManagers;
 using IFramework.MessageQueue.MessageFormat;
-using EQueue.Clients.Consumers;
-using EQueue.Protocols;
+using EQueueClientsConsumers = EQueue.Clients.Consumers;
+using EQueueProtocols = EQueue.Protocols;
 
 namespace IFramework.MessageQueue.EQueue
 {
@@ -20,15 +20,15 @@ namespace IFramework.MessageQueue.EQueue
     {
         IHandlerProvider HandlerProvider { get; set; }
 
-        public DomainEventSubscriber(string name, ConsumerSetting consumerSettings, 
+        public DomainEventSubscriber(string name, EQueueClientsConsumers.ConsumerSetting consumerSetting, 
                                      string groupName, string subscribeTopic,
                                      IHandlerProvider handlerProvider)
-            : base(groupName, consumerSettings, groupName, subscribeTopic)
+            : base(groupName, consumerSetting, groupName, subscribeTopic)
         {
             HandlerProvider = handlerProvider;
         }
 
-        public override void Handle(QueueMessage message, global::EQueue.Clients.Consumers.IMessageContext context)
+        public override void Handle(EQueueProtocols.QueueMessage message, global::EQueue.Clients.Consumers.IMessageContext context)
         {
             var messageContexts = message.Body.GetMessage<List<IFramework.MessageQueue.MessageFormat.MessageContext>>();
             messageContexts.ForEach(messageContext =>
@@ -38,7 +38,7 @@ namespace IFramework.MessageQueue.EQueue
             });
         }
 
-        protected override void ConsumeMessage(IFramework.MessageQueue.MessageFormat.MessageContext messageContext, QueueMessage queueMessage)
+        protected override void ConsumeMessage(IFramework.MessageQueue.MessageFormat.MessageContext messageContext, EQueueProtocols.QueueMessage queueMessage)
         {
 
             _Logger.DebugFormat("Start Handle event , messageContextID:{0} queueID:{1}", messageContext.MessageID, queueMessage.QueueId);
