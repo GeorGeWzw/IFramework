@@ -65,6 +65,13 @@ namespace IFramework.MessageQueue.ZeroMQ
             });
         }
 
+        public void Publish(params IEvent[] events)
+        {
+            events.ForEach(@event =>
+            {
+                MessageQueue.Add(new MessageContext(@event));
+            });
+        }
 
         void PublishEvent()
         {
