@@ -7,88 +7,181 @@ using System.Linq;
 using System.Net.Http;
 using System.Web;
 
-namespace IFramework.AspNet.Cors
+namespace IFramework.AspNet
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
-    public class CorsAttribute : Attribute
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.Net.Http;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using System.Web.Cors;
+    using System.Web.Http.Cors;
+
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false)]
+    public class EnableCorsAttribute : Attribute, ICorsPolicyProvider
     {
-        static ILogger _Logger = IoCFactory.Resolve<ILoggerFactory>().Create(typeof(CorsAttribute));
-        
-        static CorsAttribute()
-        {
-            try
-            {
-                AllowOrigins = Configuration.GetAppConfig("AllowCorsOrigins")
-                                                  .Split(new char[] { ',' },
-                                                        StringSplitOptions.RemoveEmptyEntries);
-                
-                _Logger.Debug(AllowOrigins.ToJson());
-            }
-            catch (Exception ex)
-            {
-                _Logger.Error(Configuration.GetAppConfig("AllowCorsOrigins"), ex);
-            }
-        }
-        public static string[] AllowOrigins
-        {
-            get;
-            private set;
-        }
-        public string ErrorMessage { get; private set; }
-        public CorsAttribute()
-        {
+        private CorsPolicy _corsPolicy;
+        private bool _originsValidated;
 
-        }
-        public bool TryEvaluate(HttpRequestMessage request, out IDictionary<string, string> headers)
+        public EnableCorsAttribute(string origins, string headers, string methods) : this(origins, headers, methods, false, null)
         {
-            headers = null;
-            string origin = null;
-            try
-            {
-                origin = request.Headers.GetValues("Origin").FirstOrDefault();
-            }
-            catch (Exception)
-            {
-                this.ErrorMessage = "Cross-origin request denied";
-                return false;
-            }
-            Uri originUri = new Uri(origin);
-            _Logger.DebugFormat("{0} origin: {1}", AllowOrigins.ToJson(), originUri.Authority);
-            if (AllowOrigins.Contains(originUri.Authority))
-            {
-                headers = this.GenerateResponseHeaders(request);
-                return true;
-            }
-
-            this.ErrorMessage = "Cross-origin request denied";
-            return false;
         }
 
-        private IDictionary<string, string> GenerateResponseHeaders(HttpRequestMessage request)
+        public EnableCorsAttribute(string origins, string headers, string methods, bool supportsCredentials = true, string exposedHeaders = null)
         {
-
-            //设置响应头"Access-Control-Allow-Methods"
-
-            string origin = request.Headers.GetValues("Origin").First();
-
-            Dictionary<string, string> headers = new Dictionary<string, string>();
-
-            headers.Add("Access-Control-Allow-Origin", origin);
-
-            if (request.IsPreflightRequest())
+            if (string.IsNullOrEmpty(origins))
             {
-                //设置响应头"Access-Control-Request-Headers"
-                //和"Access-Control-Allow-Headers"
-                headers.Add("Access-Control-Allow-Methods", "*");
-
-                string requestHeaders = request.Headers.GetValues("Access-Control-Request-Headers").FirstOrDefault();
-
-                if (!string.IsNullOrEmpty(requestHeaders))
+                origins = Config.Configuration.GetAppConfig("AllowOrigins");
+                if (string.IsNullOrEmpty(origins))
                 {
-                    headers.Add("Access-Control-Allow-Headers", requestHeaders);
+                    throw new ArgumentException("ArgumentCannotBeNullOrEmpty", "origins");
                 }
             }
-            return headers;
+            this._corsPolicy = new CorsPolicy();
+            this._corsPolicy.SupportsCredentials = supportsCredentials;
+            if (origins == "*")
+            {
+                this._corsPolicy.AllowAnyOrigin = true;
+            }
+            else
+            {
+                AddCommaSeparatedValuesToCollection(origins, this._corsPolicy.Origins);
+            }
+            if (!string.IsNullOrEmpty(headers))
+            {
+                if (headers == "*")
+                {
+                    this._corsPolicy.AllowAnyHeader = true;
+                }
+                else
+                {
+                    AddCommaSeparatedValuesToCollection(headers, this._corsPolicy.Headers);
+                }
+            }
+            if (!string.IsNullOrEmpty(methods))
+            {
+                if (methods == "*")
+                {
+                    this._corsPolicy.AllowAnyMethod = true;
+                }
+                else
+                {
+                    AddCommaSeparatedValuesToCollection(methods, this._corsPolicy.Methods);
+                }
+            }
+            if (!string.IsNullOrEmpty(exposedHeaders))
+            {
+                AddCommaSeparatedValuesToCollection(exposedHeaders, this._corsPolicy.ExposedHeaders);
+            }
+        }
+
+        private static void AddCommaSeparatedValuesToCollection(string commaSeparatedValues, IList<string> collection)
+        {
+            string[] strArray = commaSeparatedValues.Split(new char[] { ',' });
+            for (int i = 0; i < strArray.Length; i++)
+            {
+                string str = strArray[i].Trim();
+                if (!string.IsNullOrEmpty(str))
+                {
+                    collection.Add(str);
+                }
+            }
+        }
+
+        public Task<CorsPolicy> GetCorsPolicyAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (!this._originsValidated)
+            {
+                ValidateOrigins(this._corsPolicy.Origins);
+                this._originsValidated = true;
+            }
+            return Task.FromResult<CorsPolicy>(this._corsPolicy);
+        }
+
+        private static void ValidateOrigins(IList<string> origins)
+        {
+            foreach (string str in origins)
+            {
+                if (string.IsNullOrEmpty(str))
+                {
+                    throw new InvalidOperationException("OriginCannotBeNullOrEmpty");
+                }
+                if (str.EndsWith("/", StringComparison.Ordinal))
+                {
+                    throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "OriginCannotEndWithSlash", new object[] { str }));
+                }
+                if (!Uri.IsWellFormedUriString(str, UriKind.Absolute))
+                {
+                    throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "OriginNotWellFormed", new object[] { str }));
+                }
+                Uri uri = new Uri(str);
+                if ((!string.IsNullOrEmpty(uri.AbsolutePath) && !string.Equals(uri.AbsolutePath, "/", StringComparison.Ordinal)) || (!string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment)))
+                {
+                    throw new InvalidOperationException(string.Format(CultureInfo.CurrentCulture, "OriginMustNotContainPathQueryOrFragment", new object[] { str }));
+                }
+            }
+        }
+
+        public IList<string> ExposedHeaders
+        {
+            get
+            {
+                return this._corsPolicy.ExposedHeaders;
+            }
+        }
+
+        public IList<string> Headers
+        {
+            get
+            {
+                return this._corsPolicy.Headers;
+            }
+        }
+
+        public IList<string> Methods
+        {
+            get
+            {
+                return this._corsPolicy.Methods;
+            }
+        }
+
+        public IList<string> Origins
+        {
+            get
+            {
+                return this._corsPolicy.Origins;
+            }
+        }
+
+        public long PreflightMaxAge
+        {
+            get
+            {
+                long? preflightMaxAge = this._corsPolicy.PreflightMaxAge;
+                if (!preflightMaxAge.HasValue)
+                {
+                    return -1L;
+                }
+                return preflightMaxAge.GetValueOrDefault();
+            }
+            set
+            {
+                this._corsPolicy.PreflightMaxAge = new long?(value);
+            }
+        }
+
+        public bool SupportsCredentials
+        {
+            get
+            {
+                return this._corsPolicy.SupportsCredentials;
+            }
+            set
+            {
+                this._corsPolicy.SupportsCredentials = value;
+            }
         }
     }
 }
