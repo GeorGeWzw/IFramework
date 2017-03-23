@@ -19,6 +19,15 @@ namespace IFramework.AspNet
 {
     public class ApiControllerBase : ApiController
     {
+
+        protected virtual string GetInvalidModelErrorMessage()
+        {
+            var isDeubg = Config.Configuration.GetCompliationSection()?.Debug ?? false;
+            return string.Join(";",
+                               ModelState.Select(m => $"{m.Key}:{(isDeubg ? string.Join(",", m.Value.Errors.Select(e => e.ErrorMessage + e.Exception?.Message)) : "invalid")}"));
+
+        }
+
         #region process wrapping
         protected ApiResult<T> Process<T>(Func<T> func)
         {
@@ -33,9 +42,7 @@ namespace IFramework.AspNet
                     new ApiResult<T>
                     (
                         ErrorCode.InvalidParameters,
-                       string.Join(",", ModelState.Values
-                                                       .SelectMany(v => v.Errors
-                                                                         .Select(e => e.ErrorMessage)))
+                        GetInvalidModelErrorMessage()
                     );
             }
         }
@@ -52,9 +59,7 @@ namespace IFramework.AspNet
                     new ApiResult
                     (
                         ErrorCode.InvalidParameters,
-                        string.Join(",", ModelState.Values
-                                                       .SelectMany(v => v.Errors
-                                                                         .Select(e => e.ErrorMessage)))
+                        GetInvalidModelErrorMessage()
                     );
             }
         }
@@ -111,9 +116,7 @@ namespace IFramework.AspNet
                     new ApiResult
                     (
                         ErrorCode.InvalidParameters,
-                        string.Join(",", ModelState.Values
-                                                       .SelectMany(v => v.Errors
-                                                                         .Select(e => e.ErrorMessage)))
+                        GetInvalidModelErrorMessage()
                     );
             }
         }
@@ -130,9 +133,7 @@ namespace IFramework.AspNet
                    new ApiResult<T>
                    (
                       ErrorCode.InvalidParameters,
-                      string.Join(",", ModelState.Values
-                                                      .SelectMany(v => v.Errors
-                                                                        .Select(e => e.ErrorMessage)))
+                      GetInvalidModelErrorMessage()
                    );
             }
 
