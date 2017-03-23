@@ -12,3 +12,8 @@ obj
 *.vsmdi
 /Src/Sample/Sample.CommandService/log
 /Src/Sample/Sample.CommandService/log.txt
+/Src/iFramework/bin4.5/Debug
+/Src/iFramework.Plugins
+/Src/Sample/Sample.CommandService.ZeroMQ
+/Src/.vs/config
+/Src/packagelink.bat

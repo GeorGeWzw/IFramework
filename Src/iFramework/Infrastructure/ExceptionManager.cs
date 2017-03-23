@@ -54,6 +54,25 @@ namespace IFramework.Infrastructure
     public static class ExceptionManager
     {
         static ILogger _logger = IoCFactory.Resolve<ILoggerFactory>().Create(typeof(ExceptionManager));
+        static string _UnKnownMessage = ErrorCode.UnknownError.ToString();
+
+        public static void SetUnKnownMessage(string unknownMessage)
+        {
+            _UnKnownMessage = unknownMessage;
+        }
+
+
+        static string GetUnknownErrorMessage(Exception ex)
+        {
+            var unknownErrorMessage = _UnKnownMessage;
+            var compliationSection = IFramework.Config.Configuration.GetCompliationSection();
+            if (compliationSection != null && compliationSection.Debug)
+            {
+                unknownErrorMessage = ex.Message;
+            }
+            return unknownErrorMessage;
+        }
+
         public async static Task<ApiResult<T>> ProcessAsync<T>(Func<Task<T>> func, bool continueOnCapturedContext = false)
         {
             ApiResult<T> apiResult = null;
@@ -72,7 +91,8 @@ namespace IFramework.Infrastructure
                 }
                 else
                 {
-                    apiResult = new ApiResult<T>(ErrorCode.UnknownError, baseException.Message);
+                    
+                    apiResult = new ApiResult<T>(ErrorCode.UnknownError, GetUnknownErrorMessage(baseException));
                     _logger.Error(ex);
                 }
             }
@@ -97,7 +117,7 @@ namespace IFramework.Infrastructure
                 }
                 else
                 {
-                    apiResult = new ApiResult(ErrorCode.UnknownError, baseException.Message);
+                    apiResult = new ApiResult(ErrorCode.UnknownError, GetUnknownErrorMessage(baseException));
                     _logger.Error(ex);
                 }
             }
@@ -122,7 +142,7 @@ namespace IFramework.Infrastructure
                 }
                 else
                 {
-                    apiResult = new ApiResult(ErrorCode.UnknownError,baseException.Message);
+                    apiResult = new ApiResult(ErrorCode.UnknownError, GetUnknownErrorMessage(baseException));
                     _logger.Error(ex);
                 }
             }
@@ -154,7 +174,7 @@ namespace IFramework.Infrastructure
                 }
                 else
                 {
-                    apiResult = new ApiResult<T>(ErrorCode.UnknownError, baseException.Message);
+                    apiResult = new ApiResult<T>(ErrorCode.UnknownError, GetUnknownErrorMessage(baseException));
                     _logger.Error(ex);
                 }
             }
