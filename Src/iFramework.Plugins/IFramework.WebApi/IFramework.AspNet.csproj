@@ -110,7 +110,7 @@
     <Compile Include="CommandHttpClient.cs" />
     <Compile Include="MediaTypeFormatters\CommandMediaTypeFormatter.cs" />
     <Compile Include="Controllers\ControllerExtension.cs" />
-    <Compile Include="Cors\CorsAttribute.cs" />
+    <Compile Include="Cors\EnableCorsAttribute.cs" />
     <Compile Include="MediaTypeFormatters\MultipartMediaTypeFormatter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utility.cs" />

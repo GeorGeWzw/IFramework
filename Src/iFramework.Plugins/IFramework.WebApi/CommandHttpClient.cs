@@ -1,6 +1,7 @@
 ﻿using IFramework.Command;
 using IFramework.Config;
 using IFramework.Infrastructure;
+using IFramework.SysExceptions.ErrorCodes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,31 @@ namespace IFramework.AspNet
 {
     public static class CommandHttpClient
     {
+        public static ApiResult PostJson<T>(this HttpClient apiClient, string requestUri, T value)
+        {
+            var task = apiClient.PostAsJsonAsync(requestUri, value);
+            if (task.Result.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                return task.Result.Content.ReadAsAsync<ApiResult>().Result;
+            }
+            else
+            {
+                return new ApiResult(ErrorCode.HttpStatusError, task.Result.StatusCode.ToString());
+            }
+        }
+
+        public static ApiResult<TResult> PostJson<T, TResult>(this HttpClient apiClient, string requestUri, T value)
+        {
+            var task = apiClient.PostAsJsonAsync(requestUri, value);
+            if (task.Result.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                return task.Result.Content.ReadAsAsync<ApiResult<TResult>>().Result;
+            }
+            else
+            {
+                return new ApiResult<TResult>(ErrorCode.HttpStatusError, task.Result.StatusCode.ToString());
+            }
+        }
         //static readonly string CommandActionUrlTemplate = Configuration.GetAppConfig("CommandActionUrlTemplate");    
 
         public static Task<TResult> DoCommand<TResult>(this HttpClient apiClient, ICommand command, string requestUrl = "api/command")
