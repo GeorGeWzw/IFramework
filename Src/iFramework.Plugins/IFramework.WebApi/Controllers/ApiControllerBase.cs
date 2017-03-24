@@ -24,7 +24,8 @@ namespace IFramework.AspNet
         {
             var isDeubg = Config.Configuration.GetCompliationSection()?.Debug ?? false;
             return string.Join(";",
-                               ModelState.Select(m => $"{m.Key}:{(isDeubg ? string.Join(",", m.Value.Errors.Select(e => e.ErrorMessage + e.Exception?.Message)) : "invalid")}"));
+                               ModelState.Where(m => (m.Value?.Errors?.Count ?? 0) > 0)
+                                         .Select(m => $"{m.Key}:{(isDeubg ? string.Join(",", m.Value.Errors.Select(e => e.ErrorMessage + e.Exception?.Message)) : "invalid")}"));
 
         }
 
