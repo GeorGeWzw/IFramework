@@ -14,7 +14,7 @@ namespace IFramework.Message.Impl
     public abstract class HandlerProvider : IHandlerProvider
     {
         public const string FrameworkConfigurationSectionName = nameof(FrameworkConfiguration);
-        private readonly HashSet<Type> _discardKeyTypes;
+        private readonly ConcurrentDictionary<Type, byte> _discardKeyTypes;
         private readonly ConcurrentDictionary<Type, List<HandlerTypeInfo>> _handlerTypes;
 
         protected HandlerProvider(params string[] assemblies)
@@ -22,7 +22,7 @@ namespace IFramework.Message.Impl
             Assemblies = assemblies;
             _handlerTypes = new ConcurrentDictionary<Type, List<HandlerTypeInfo>>();
             // _HandlerConstuctParametersInfo = new Dictionary<Type, ParameterInfo[]>();
-            _discardKeyTypes = new HashSet<Type>();
+            _discardKeyTypes = new ConcurrentDictionary<Type, byte>();
 
             RegisterHandlers();
         }
@@ -44,7 +44,7 @@ namespace IFramework.Message.Impl
                     avaliableHandlerTypes = handlerTypes;
                 }
             }
-            else if (!_discardKeyTypes.Contains(messageType))
+            else if (!_discardKeyTypes.ContainsKey(messageType))
             {
                 foreach (var handlerTypes in _handlerTypes)
                 {
@@ -59,7 +59,7 @@ namespace IFramework.Message.Impl
                 }
                 if (avaliableHandlerTypes.Count == 0)
                 {
-                    _discardKeyTypes.Add(messageType);
+                    _discardKeyTypes.TryAdd(messageType, 0);
                 }
                 else
                 {

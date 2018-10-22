@@ -3,12 +3,12 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>2.0.0-prelease-0037</Version>
+    <Version>2.0.0-prelease-0038</Version>
     <Description>Since dotnetcore2.0.0 released, IFramework supports to netcore standard2.0</Description>
     <Authors>Ivan</Authors>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/IvanZheng/IFramework</PackageProjectUrl>
-    <PackageReleaseNotes>add AddCustomOptions</PackageReleaseNotes>
+    <PackageReleaseNotes>fix _discardKeyTypes concurrent procssing  error</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
