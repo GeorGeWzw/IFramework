@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Castle.DynamicProxy;
+using AspectCore.DynamicProxy;
 using IFramework.Infrastructure;
 using MethodInfo = System.Reflection.MethodInfo;
 
@@ -10,43 +10,11 @@ namespace IFramework.DependencyInjection.Autofac
 {
     public abstract class InterceptorBase : IInterceptor
     {
-        protected readonly IObjectProvider ObjectProvider;
 
-        protected InterceptorBase(IObjectProvider objectProvider)
+        protected virtual object Process(AspectContext context, AspectDelegate next)
         {
-            ObjectProvider = objectProvider;
-        }
-
-        public virtual void Intercept(IInvocation invocation)
-        {
-            invocation.Proceed();
-        }
-
-        protected virtual object Process(IInvocation invocation)
-        {
-            invocation.Proceed();
-            return invocation.ReturnValue;
-        }
-
-        protected Type GetTaskResultType(IInvocation invocation)
-        {
-            return invocation.Method.ReturnType.GetGenericArguments().FirstOrDefault();
-        }
-
-        protected static Task<T> ProcessTaskAsync<T>(IInvocation invocation)
-        {
-            invocation.Proceed();
-            return invocation.ReturnValue as Task<T>;
-        }
-
-        protected static TAttribute GetMethodAttribute<TAttribute>(IInvocation invocation, TAttribute defaultValue = null)
-            where TAttribute : Attribute
-        {
-            return invocation.Method.GetCustomAttribute<TAttribute>() ??
-                   invocation.Method.DeclaringType?.GetCustomAttribute<TAttribute>() ??
-                   invocation.MethodInvocationTarget?.GetCustomAttribute<TAttribute>() ??
-                   invocation.MethodInvocationTarget?.DeclaringType?.GetCustomAttribute<TAttribute>() ??
-                   defaultValue;
+            context.Invoke(next);
+            return context.ReturnValue;
         }
 
         private static IEnumerable<InterceptorAttribute> GetInterceptorAttributes(MethodInfo methodInfo)
@@ -59,145 +27,143 @@ namespace IFramework.DependencyInjection.Autofac
             return type?.GetCustomAttributes(typeof(InterceptorAttribute), true).Cast<InterceptorAttribute>() ?? new InterceptorAttribute[0];
         }
 
-        protected static InterceptorAttribute[] GetInterceptorAttributes(IInvocation invocation)
+       
+        protected Type GetTaskResultType(AspectContext context)
         {
-            return GetInterceptorAttributes(invocation.Method)
-                   .Union(GetInterceptorAttributes(invocation.Method.DeclaringType))
-                   .Union(GetInterceptorAttributes(invocation.MethodInvocationTarget))
-                   .Union(GetInterceptorAttributes(invocation.MethodInvocationTarget?.DeclaringType))
+            return context.ImplementationMethod.ReturnType.GetGenericArguments().FirstOrDefault();
+        }
+
+        protected static InterceptorAttribute[] GetInterceptorAttributes(AspectContext context)
+        {
+            return GetInterceptorAttributes(context.ProxyMethod)
+                   .Union(GetInterceptorAttributes(context.ProxyMethod.DeclaringType))
+                   .Union(GetInterceptorAttributes(context.ImplementationMethod))
+                   .Union(GetInterceptorAttributes(context.ImplementationMethod?.DeclaringType))
                    .OrderBy(i => i.Order)
                    .ToArray();
         }
+
+        public virtual Task Invoke(AspectContext context, AspectDelegate next)
+        {
+            return context.Invoke(next);
+        }
+
+        public bool AllowMultiple { get; } = true;
+        public bool Inherited { get; set; }
+        public int Order { get; set; }
     }
 
     public class DefaultInterceptor : InterceptorBase
     {
-        public DefaultInterceptor(IObjectProvider objectProvider) : base(objectProvider) { }
-
-
-        protected virtual Task<T> InvokeTargetMethod<T>(IInvocation invocation)
+        public virtual async Task InterceptAsync<T>(AspectContext context, AspectDelegate next, InterceptorAttribute[] interceptorAttributes)
         {
-            // check if the target is Castle.Proxy, it should use invocation.Proceed() !
-            if (invocation.InvocationTarget.GetType() == invocation.Proxy.GetType())
+            Func<Task<T>> processAsyncFunc = async () =>
             {
-                invocation.Proceed();
-                return invocation.ReturnValue as Task<T>;
-            }
-
-            MethodInfo targetMethod = invocation.GetConcreteMethodInvocationTarget();
-            return targetMethod.Invoke(invocation.InvocationTarget, invocation.Arguments) as Task<T>;
-        }
-
-        protected virtual Task InvokeTargetMethod(IInvocation invocation)
-        {
-            if (invocation.InvocationTarget.GetType() == invocation.Proxy.GetType())
-            {
-                invocation.Proceed();
-                return invocation.ReturnValue as Task;
-            }
-
-            MethodInfo targetMethod = invocation.GetConcreteMethodInvocationTarget();
-            return targetMethod.Invoke(invocation.InvocationTarget, invocation.Arguments) as Task;
-        }
-
-        public virtual void InterceptAsync<T>(IInvocation invocation, InterceptorAttribute[] interceptorAttributes)
-        {
-            Func<Task<T>> processAsyncFunc = () => InvokeTargetMethod<T>(invocation);
+                await context.Invoke(next);
+                return ((Task<T>)context.ReturnValue).Result;
+            };
 
             foreach (var interceptor in interceptorAttributes)
             {
                 var func = processAsyncFunc;
                 processAsyncFunc = () => interceptor.ProcessAsync(func,
-                                                                  ObjectProvider,
-                                                                  invocation.TargetType,
-                                                                  invocation.InvocationTarget,
-                                                                  invocation.Method,
-                                                                  invocation.Arguments);
+                                                                  context.ServiceProvider
+                                                                         .GetService(typeof(IObjectProvider)) as IObjectProvider,
+                                                                  context.Implementation.GetType(),
+                                                                  context.Implementation,
+                                                                  context.ImplementationMethod,
+                                                                  context.Parameters);
             }
 
-            var returnValue = processAsyncFunc();
-            invocation.ReturnValue = returnValue;
+            var returnValue = await processAsyncFunc();
+            context.ReturnValue = Task.FromResult(returnValue);
         }
 
-        public virtual void InterceptAsync(IInvocation invocation, InterceptorAttribute[] interceptorAttributes)
+        public virtual Task InterceptAsync(AspectContext context, AspectDelegate next, InterceptorAttribute[] interceptorAttributes)
         {
-            Func<Task> processAsyncFunc = () => InvokeTargetMethod(invocation);
+            Func<Task> processAsyncFunc = () => context.Invoke(next);
 
             foreach (var interceptor in interceptorAttributes)
             {
                 var func = processAsyncFunc;
                 processAsyncFunc = () => interceptor.ProcessAsync(func,
-                                                                  ObjectProvider,
-                                                                  invocation.TargetType,
-                                                                  invocation.InvocationTarget,
-                                                                  invocation.Method,
-                                                                  invocation.Arguments);
+                                                                  context.ServiceProvider
+                                                                         .GetService(typeof(IObjectProvider)) as IObjectProvider,
+                                                                  context.Implementation.GetType(),
+                                                                  context.Implementation,
+                                                                  context.ImplementationMethod,
+                                                                  context.Parameters);
             }
 
-            var returnValue = processAsyncFunc();
-            invocation.ReturnValue = returnValue;
+            return processAsyncFunc();
         }
 
-        public override void Intercept(IInvocation invocation)
+
+     
+
+        public override Task Invoke(AspectContext context, AspectDelegate next)
         {
-            var isTaskResult = typeof(Task).IsAssignableFrom(invocation.Method.ReturnType);
-            var interceptorAttributes = GetInterceptorAttributes(invocation);
+            var interceptorAttributes = GetInterceptorAttributes(context);
 
             if (interceptorAttributes.Length > 0)
             {
+                var isTaskResult = typeof(Task).IsAssignableFrom(context.ImplementationMethod.ReturnType);
                 if (isTaskResult)
                 {
-                    var resultType = GetTaskResultType(invocation);
+                    var resultType = GetTaskResultType(context);
                     if (resultType == null)
                     {
-                        InterceptAsync(invocation, interceptorAttributes);
+                        return InterceptAsync(context, next, interceptorAttributes);
                     }
                     else
                     {
-                        this.InvokeGenericMethod(nameof(InterceptAsync),
-                                                 new object[] {invocation, interceptorAttributes},
+                        return (Task)this.InvokeGenericMethod(nameof(InterceptAsync),
+                                                 new object[] {context, next, interceptorAttributes},
                                                  resultType);
                     }
                 }
                 else
                 {
-                    if (invocation.Method.ReturnType != typeof(void))
+                    if (context.ImplementationMethod.ReturnType != typeof(void))
                     {
-                        Func<dynamic> processFunc = () => Process(invocation);
+                        Func<dynamic> processFunc = () => Process(context, next);
                         foreach (var interceptor in interceptorAttributes)
                         {
                             var func = processFunc;
                             processFunc = () => interceptor.Process(func,
-                                                                    ObjectProvider,
-                                                                    invocation.TargetType,
-                                                                    invocation.InvocationTarget,
-                                                                    invocation.Method,
-                                                                    invocation.Arguments);
+                                                                    context.ServiceProvider
+                                                                           .GetService(typeof(IObjectProvider)) as IObjectProvider,
+                                                                    context.Implementation.GetType(),
+                                                                    context.Implementation,
+                                                                    context.ImplementationMethod,
+                                                                    context.Parameters);
                         }
 
-                        invocation.ReturnValue = processFunc();
+                        context.ReturnValue = processFunc();
                     }
                     else
                     {
-                        Action processFunc = () => Process(invocation);
+                        Action processFunc = () => Process(context, next);
                         foreach (var interceptor in interceptorAttributes)
                         {
                             var func = processFunc;
                             processFunc = () => interceptor.Process(func,
-                                                                    ObjectProvider,
-                                                                    invocation.TargetType,
-                                                                    invocation.InvocationTarget,
-                                                                    invocation.Method,
-                                                                    invocation.Arguments);
+                                                                    context.ServiceProvider
+                                                                           .GetService(typeof(IObjectProvider)) as IObjectProvider,
+                                                                    context.Implementation.GetType(),
+                                                                    context.Implementation,
+                                                                    context.ImplementationMethod,
+                                                                    context.Parameters);
                         }
 
                         processFunc();
                     }
+                    return Task.CompletedTask;
                 }
             }
             else
             {
-                base.Intercept(invocation);
+                return base.Invoke(context, next);
             }
         }
     }

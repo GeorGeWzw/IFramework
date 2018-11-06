@@ -1,13 +1,16 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using AspectCore.Configuration;
+using AspectCore.Extensions.Autofac;
 using Autofac;
+using Autofac.Builder;
 using Autofac.Core;
 using Autofac.Extensions.DependencyInjection;
 using IFramework.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
-using RegistrationExtensions = Autofac.Extras.DynamicProxy.RegistrationExtensions;
 
 namespace IFramework.DependencyInjection.Autofac
 {
@@ -49,8 +52,8 @@ namespace IFramework.DependencyInjection.Autofac
            
             _containerBuilder.Register<IObjectProvider>(context =>
                              {
-                                 var serviceProvider = context.Resolve<IServiceProvider>() as AutofacServiceProvider;
-                                 var componentContextField = typeof(AutofacServiceProvider).GetField("_lifetimeScope",
+                                 var serviceProvider = context.Resolve<IServiceProvider>();
+                                 var componentContextField = serviceProvider.GetType().GetField("_componentContext",
                                                   BindingFlags.NonPublic |
                                                   BindingFlags.Instance);
                                  if (componentContextField?.GetValue(serviceProvider) is IComponentContext componentContext)
@@ -127,7 +130,7 @@ namespace IFramework.DependencyInjection.Autofac
                                                            .WithParameters(injectionMembers);
                 }
             }
-            RegisterInterceptor(registrationBuilder, injections);
+            RegisterInterceptor(registrationBuilder, from, to, injections);
             return this;
         }
 
@@ -151,7 +154,7 @@ namespace IFramework.DependencyInjection.Autofac
                                                        .InstanceLifetime(lifetime);
             }
 
-            RegisterInterceptor(registrationBuilder, injections);
+            RegisterInterceptor(registrationBuilder, from, to, injections);
             return this;
         }
 
@@ -178,7 +181,7 @@ namespace IFramework.DependencyInjection.Autofac
                                                        .WithParameters(injectionMembers);
             }
 
-            RegisterInterceptor(registrationBuilder, injections);
+            RegisterInterceptor(registrationBuilder, from, to, injections);
             return this;
         }
 
@@ -204,7 +207,7 @@ namespace IFramework.DependencyInjection.Autofac
                                                        .WithParameters(injectionMembers);
             }
 
-            RegisterInterceptor(registrationBuilder, injections);
+            RegisterInterceptor(registrationBuilder,  typeof(TFrom), typeof(TTo), injections);
             return this;
         }
 
@@ -228,7 +231,7 @@ namespace IFramework.DependencyInjection.Autofac
                                                        .WithParameters(injectionMembers);
             }
 
-            RegisterInterceptor(registrationBuilder, injections);
+            RegisterInterceptor(registrationBuilder,  typeof(TFrom), typeof(TTo), injections);
             return this;
         }
 
@@ -252,7 +255,7 @@ namespace IFramework.DependencyInjection.Autofac
                                                        .WithParameters(injectionMembers);
             }
 
-            RegisterInterceptor(registrationBuilder, injections);
+            RegisterInterceptor(registrationBuilder, typeof(TFrom), typeof(TTo), injections);
             return this;
         }
 
@@ -278,32 +281,48 @@ namespace IFramework.DependencyInjection.Autofac
                                                        .WithParameters(injectionMembers);
             }
 
-            RegisterInterceptor(registrationBuilder, injections);
+       
+            RegisterInterceptor(registrationBuilder, typeof(TFrom), typeof(TTo), injections);
             return this;
         }
+      
+         private ConcurrentDictionary<Type, List<Type>> _interceptorMapping = new ConcurrentDictionary<Type, List<Type>>();
 
-        private void RegisterInterceptor(dynamic registrationBuilder, Injection[] injections)
+        private void RegisterInterceptor(dynamic registrationBuilder, Type typeFrom, Type typeTo, Injection[] injections)
         {
             injections.ForEach(injection =>
             {
-                if (injection is InterfaceInterceptorInjection)
-                {
-                    RegistrationExtensions.EnableInterfaceInterceptors(registrationBuilder);
-                }
-                else if (injection is VirtualMethodInterceptorInjection)
-                {
-                    RegistrationExtensions.EnableClassInterceptors(registrationBuilder);
-                }
-                else if (injection is TransparentProxyInterceptorInjection)
-                {
-                    throw new NotImplementedException();
-                    //RegistrationExtensions.InterceptTransparentProxy(registrationBuilder)
-                    //                      .UseWcfSafeRelease();
-                }
-                else if (injection is InterceptionBehaviorInjection behaviorInjection)
+                //if (injection is InterfaceInterceptorInjection)
+                //{
+                //    RegistrationExtensions.EnableInterfaceInterceptors(registrationBuilder);
+                //}
+                //else if (injection is VirtualMethodInterceptorInjection)
+                //{
+                //    RegistrationExtensions.EnableClassInterceptors(registrationBuilder);
+                //}
+                //else if (injection is TransparentProxyInterceptorInjection)
+                //{
+                //    throw new NotImplementedException();
+                   
+                //}
+                //else 
+                if (injection is InterceptionBehaviorInjection behaviorInjection)
                 {
                     var interceptorType = behaviorInjection.BehaviorType ?? typeof(DefaultInterceptor);
-                    RegistrationExtensions.InterceptedBy(registrationBuilder, interceptorType);
+                    var typeList = _interceptorMapping.GetOrAdd(interceptorType, key => new List<Type>());
+                    if (!typeList.Contains(typeFrom))
+                    {
+                        typeList.Add(typeFrom);
+                    }
+
+                    _containerBuilder.RegisterDynamicProxy(config => config.Interceptors
+                                                                           .AddTyped(interceptorType,
+                                                                                     method =>
+                                                                                     {
+                                                                                         return typeList.Contains(method.DeclaringType);
+                                                                                     }));
+
+                    //RegistrationExtensions.InterceptedBy(registrationBuilder, interceptorType);
                 }
             });
         }

@@ -20,9 +20,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspectCore.Extensions.Autofac" Version="1.0.1" />
     <PackageReference Include="Autofac" Version="4.8.1" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.3.0" />
-    <PackageReference Include="Autofac.Extras.DynamicProxy" Version="4.4.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.0" />
     <PackageReference Include="System.ComponentModel.TypeConverter" Version="4.3.0" />
   </ItemGroup>
