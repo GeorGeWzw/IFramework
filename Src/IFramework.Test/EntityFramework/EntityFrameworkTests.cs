@@ -18,8 +18,10 @@ using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 using Xunit;
 using ObjectProvider = IFramework.DependencyInjection.Unity.ObjectProvider;
+using TransactionOptions = System.Transactions.TransactionOptions;
 
 namespace IFramework.Test.EntityFramework
 {
@@ -57,7 +59,7 @@ namespace IFramework.Test.EntityFramework
                          .UseCommonComponents()
                          .UseJsonNet()
                          .UseLog4Net()
-                         .UseDbContextPool<DemoDbContext>(options =>
+                         .UseDbContext<DemoDbContext>(options =>
                          {
                              options.EnableSensitiveDataLogging();
                              options.UseMongoDb(Configuration.Instance.GetConnectionString(DemoDbContextFactory.MongoDbConnectionStringName));
@@ -125,12 +127,6 @@ namespace IFramework.Test.EntityFramework
                                                     new TransactionOptions {IsolationLevel = IsolationLevel.ReadCommitted},
                                                     TransactionScopeAsyncFlowOption.Enabled))
             {
-                var serviceProvider = serviceScope.GetService<IServiceProvider>();
-                if (serviceProvider == null)
-                {
-                    Assert.NotNull(serviceProvider);
-                }
-
                 try
                 {
                     var dbContext = serviceScope.GetService<DemoDbContext>();
@@ -141,7 +137,7 @@ namespace IFramework.Test.EntityFramework
                         Assert.NotNull(dbContext);
                     }
 
-                    var user = new User("ivan", "male");
+                    var user = new User($"ivan_{DateTime.Now.Ticks}", "male");
                     user.AddCard("ICBC");
                     user.AddCard("CCB");
                     user.AddCard("ABC");
@@ -149,9 +145,9 @@ namespace IFramework.Test.EntityFramework
                     dbContext.Users.Add(user);
                     await dbContext.SaveChangesAsync();
                     scope.Complete();
-                    var client = dbContext.GetMongoDbClient();
-                    var database = dbContext.GetMongoDbDatabase();
-                    var conn = dbContext.GetMongoDbConnection();
+                    //var client = dbContext.GetMongoDbClient();
+                    //var database = dbContext.GetMongoDbDatabase();
+                    //var conn = dbContext.GetMongoDbConnection();
                 }
                 catch (Exception e)
                 {
@@ -168,16 +164,18 @@ namespace IFramework.Test.EntityFramework
 
             try
             {
+                var start = DateTime.Now;
                 //await AddUserTest();
                 var tasks = new List<Task>();
-                for (int i = 0; i < 5; i++)
+                for (int i = 0; i < 10; i++)
                 {
-                    tasks.Add(GetUsersTest());
+                    tasks.Add(InternalGetUsersTest(i));
+                    //tasks.Add(AddUserTest());
                 }
 
                 await Task.WhenAll(tasks);
 
-                logger.LogDebug($"incremented : {DemoDbContext.Total}");
+                logger.LogDebug($"incremented : {DemoDbContext.Total} cost: {(DateTime.Now - start).TotalMilliseconds} ms");
             }
             catch (Exception e)
             {
@@ -240,33 +238,46 @@ namespace IFramework.Test.EntityFramework
         }
 
         [Fact]
-        public async Task GetUsersTest()
+        public Task GetUsersTest()
+        {
+            return InternalGetUsersTest(0);
+        }
+
+        private async Task InternalGetUsersTest(int i)
         {
             using (var scope = ObjectProviderFactory.CreateScope())
             {
-                var serviceProvider = scope.GetService<IServiceProvider>();
-                if (serviceProvider == null)
-                {
-                    var logger = ObjectProviderFactory.GetService<ILoggerFactory>().CreateLogger(GetType());
-                    logger.LogError((scope as ObjectProvider)?.UnityContainer.Registrations.ToJson());
-                    Assert.NotNull(serviceProvider);
-                }
+                var logger = ObjectProviderFactory.GetService<ILoggerFactory>().CreateLogger(GetType());
+
+                //var serviceProvider = scope.GetService<IServiceProvider>();
+                //if (serviceProvider == null)
+                //{
+                //    var logger = ObjectProviderFactory.GetService<ILoggerFactory>().CreateLogger(GetType());
+                //    logger.LogError((scope as ObjectProvider)?.UnityContainer.Registrations.ToJson());
+                //    Assert.NotNull(serviceProvider);
+                //}
 
                 //var options = new DbContextOptionsBuilder<DemoDbContext>();
                 //options.UseMongoDb(Configuration.Instance.GetConnectionString(DemoDbContextFactory.MongoDbConnectionStringName));
-
+               
                 var dbContext = scope.GetService<DemoDbContext>();
-
                 try
                 {
-                    var user = await dbContext.Users.FindAsync("5BEE29960CCE411C20215A17").ConfigureAwait(false);
-                   // var connection = dbContext.GetMongoDbDatabase();
-                    var users = await dbContext.Users
-                                               //.Include(u => u.Cards)
-                                               //.FindAll(u => !string.IsNullOrWhiteSpace(u.Name))
-                                               .Take(10)
-                                               .ToListAsync()
-                                               .ConfigureAwait(false);
+                    var database = dbContext.GetMongoDbDatabase();
+                    //var user = await database.GetCollection<User>("users")
+                    //                         .FindAsync(new ExpressionFilterDefinition<User>(u => u.Id == $"ivan_{DateTime.Now.Ticks}"))
+                    //                         .ConfigureAwait(false);
+                    var user = dbContext.Users
+                                              .Find($"ivan_{DateTime.Now.Ticks}");
+                                              //.ConfigureAwait(false);
+                    logger.LogDebug($"Get users {i}");
+                    // var connection = dbContext.GetMongoDbDatabase();
+                    //var users = await dbContext.Users
+                    //                           //.Include(u => u.Cards)
+                    //                           //.FindAll(u => !string.IsNullOrWhiteSpace(u.Name))
+                    //                           .Take(10)
+                    //                           .ToListAsync()
+                    //                           .ConfigureAwait(false);
                     //foreach (var u in users)
                     //{
                     //    await u.LoadCollectionAsync(u1 => u1.Cards);
