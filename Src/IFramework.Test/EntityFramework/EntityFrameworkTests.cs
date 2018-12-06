@@ -59,7 +59,7 @@ namespace IFramework.Test.EntityFramework
                          .UseCommonComponents()
                          .UseJsonNet()
                          .UseLog4Net()
-                         .UseDbContext<DemoDbContext>(options =>
+                         .UseDbContextPool<DemoDbContext>(options =>
                          {
                              options.EnableSensitiveDataLogging();
                              options.UseMongoDb(Configuration.Instance.GetConnectionString(DemoDbContextFactory.MongoDbConnectionStringName));
@@ -157,32 +157,7 @@ namespace IFramework.Test.EntityFramework
             }
         }
 
-        [Fact]
-        public async Task ConcurrentTest()
-        {
-            var logger = ObjectProviderFactory.GetService<ILoggerFactory>().CreateLogger(GetType());
-
-            try
-            {
-                var start = DateTime.Now;
-                //await AddUserTest();
-                var tasks = new List<Task>();
-                for (int i = 0; i < 10; i++)
-                {
-                    tasks.Add(InternalGetUsersTest(i));
-                    //tasks.Add(AddUserTest());
-                }
-
-                await Task.WhenAll(tasks);
-
-                logger.LogDebug($"incremented : {DemoDbContext.Total} cost: {(DateTime.Now - start).TotalMilliseconds} ms");
-            }
-            catch (Exception e)
-            {
-                logger.LogError(e, $"incremented : {DemoDbContext.Total}");
-                throw;
-            }
-        }
+      
 
 
         [Fact]
@@ -236,7 +211,32 @@ namespace IFramework.Test.EntityFramework
 
             Assert.Equal(hashCode1, hashCode2);
         }
+        [Fact]
+        public async Task ConcurrentTest()
+        {
+            var logger = ObjectProviderFactory.GetService<ILoggerFactory>().CreateLogger(GetType());
 
+            try
+            {
+                var start = DateTime.Now;
+                //await AddUserTest();
+                var tasks = new List<Task>();
+                for (int i = 0; i < 100; i++)
+                {
+                    tasks.Add(InternalGetUsersTest(i));
+                    //tasks.Add(AddUserTest());
+                }
+
+                await Task.WhenAll(tasks);
+
+                logger.LogDebug($"incremented : {DemoDbContext.Total} cost: {(DateTime.Now - start).TotalMilliseconds} ms");
+            }
+            catch (Exception e)
+            {
+                logger.LogError(e, $"incremented : {DemoDbContext.Total}");
+                throw;
+            }
+        }
         [Fact]
         public Task GetUsersTest()
         {
@@ -267,9 +267,9 @@ namespace IFramework.Test.EntityFramework
                     //var user = await database.GetCollection<User>("users")
                     //                         .FindAsync(new ExpressionFilterDefinition<User>(u => u.Id == $"ivan_{DateTime.Now.Ticks}"))
                     //                         .ConfigureAwait(false);
-                    var user = dbContext.Users
-                                              .Find($"ivan_{DateTime.Now.Ticks}");
-                                              //.ConfigureAwait(false);
+                    var user = await dbContext.Users
+                                              .FindAsync($"5C062D2A0CCE412574673691")
+                                              .ConfigureAwait(false);
                     logger.LogDebug($"Get users {i}");
                     // var connection = dbContext.GetMongoDbDatabase();
                     //var users = await dbContext.Users
