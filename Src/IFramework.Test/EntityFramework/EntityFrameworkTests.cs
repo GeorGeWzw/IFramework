@@ -18,8 +18,10 @@ using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Xunit;
+using JsonHelper = IFramework.Infrastructure.JsonHelper;
 using ObjectProvider = IFramework.DependencyInjection.Unity.ObjectProvider;
 using TransactionOptions = System.Transactions.TransactionOptions;
 
@@ -133,7 +135,7 @@ namespace IFramework.Test.EntityFramework
                     if (dbContext == null)
                     {
                         var logger = ObjectProviderFactory.GetService<ILoggerFactory>().CreateLogger(GetType());
-                        logger.LogError((serviceScope as ObjectProvider)?.UnityContainer.Registrations.ToJson());
+                        logger.LogError(JsonHelper.ToJson((serviceScope as ObjectProvider)?.UnityContainer.Registrations));
                         Assert.NotNull(dbContext);
                     }
 
@@ -248,42 +250,18 @@ namespace IFramework.Test.EntityFramework
             using (var scope = ObjectProviderFactory.CreateScope())
             {
                 var logger = ObjectProviderFactory.GetService<ILoggerFactory>().CreateLogger(GetType());
-
-                //var serviceProvider = scope.GetService<IServiceProvider>();
-                //if (serviceProvider == null)
-                //{
-                //    var logger = ObjectProviderFactory.GetService<ILoggerFactory>().CreateLogger(GetType());
-                //    logger.LogError((scope as ObjectProvider)?.UnityContainer.Registrations.ToJson());
-                //    Assert.NotNull(serviceProvider);
-                //}
-
-                //var options = new DbContextOptionsBuilder<DemoDbContext>();
-                //options.UseMongoDb(Configuration.Instance.GetConnectionString(DemoDbContextFactory.MongoDbConnectionStringName));
-               
+                
                 var dbContext = scope.GetService<DemoDbContext>();
                 try
                 {
                     var database = dbContext.GetMongoDbDatabase();
+                    database.RunCommand<BsonDocument>(new BsonDocument("profile", 2));
                     //var user = await database.GetCollection<User>("users")
                     //                         .FindAsync(new ExpressionFilterDefinition<User>(u => u.Id == $"ivan_{DateTime.Now.Ticks}"))
                     //                         .ConfigureAwait(false);
-                    var user = await dbContext.Users
-                                              .FindAsync($"5C062D2A0CCE412574673691")
-                                              .ConfigureAwait(false);
+                    var name = $"{DateTime.Now.Ticks}";
+                    var query = dbContext.Users.FirstOrDefault(u => u.Name == name);
                     logger.LogDebug($"Get users {i}");
-                    // var connection = dbContext.GetMongoDbDatabase();
-                    //var users = await dbContext.Users
-                    //                           //.Include(u => u.Cards)
-                    //                           //.FindAll(u => !string.IsNullOrWhiteSpace(u.Name))
-                    //                           .Take(10)
-                    //                           .ToListAsync()
-                    //                           .ConfigureAwait(false);
-                    //foreach (var u in users)
-                    //{
-                    //    await u.LoadCollectionAsync(u1 => u1.Cards);
-                    //    Assert.True(u.Cards.Count > 0);
-                    //    //Assert.Equal(u.GetDbContext<DemoDbContext>().GetHashCode(), dbContext.GetHashCode());
-                    //}
                 }
                 catch (Exception e)
                 {

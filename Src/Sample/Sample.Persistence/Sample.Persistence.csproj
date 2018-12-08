@@ -14,6 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\iFramework.Plugins\EFCore\Microsoft.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\iFramework.Plugins\IFramework.EntityFrameworkCore\IFramework.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\iFramework.Plugins\IFramework.MessageStores.MongoDb\IFramework.MessageStores.MongoDb.csproj" />
     <ProjectReference Include="..\..\iFramework.Plugins\IFramework.MessageStores\IFramework.MessageStores.Relational.csproj" />
@@ -26,8 +27,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.1.2" />
   </ItemGroup>
 
   </Project>

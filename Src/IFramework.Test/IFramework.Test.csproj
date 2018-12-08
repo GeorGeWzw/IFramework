@@ -16,12 +16,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="EntityFramework\DemoRepository.cs" />
+    <Compile Remove="EntityFramework\IDemoRepository.cs" />
+    <Compile Remove="EntityFramework\RepositoryTests.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Devart.Data.MySql.EFCore.Design" Version="8.12.1216" />
     <PackageReference Include="Log4Net.Async.Standard" Version="3.1.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.1.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="2.1.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="2.1.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="2.1.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.1.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="2.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
@@ -32,6 +38,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\iFramework.Plugins\Blueshift.EntityFrameworkCore.MongoDB\Blueshift.EntityFrameworkCore.MongoDB.csproj" />
+    <ProjectReference Include="..\iFramework.Plugins\EFCore\Microsoft.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\iFramework.Plugins\IFramework.DependencyInjection.Autofac\IFramework.DependencyInjection.Autofac.csproj" />
     <ProjectReference Include="..\iFramework.Plugins\IFramework.DependencyInjection.Unity\IFramework.DependencyInjection.Unity.csproj" />
     <ProjectReference Include="..\iFramework.Plugins\IFramework.EntityFrameworkCore\IFramework.EntityFrameworkCore.csproj" />

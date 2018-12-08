@@ -62,6 +62,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\iFramework.Plugins\Blueshift.EntityFrameworkCore.MongoDB\Blueshift.EntityFrameworkCore.MongoDB.csproj" />
+    <ProjectReference Include="..\..\iFramework.Plugins\EFCore\Microsoft.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\iFramework.Plugins\IFramework.AspNet\IFramework.AspNet.csproj" />
     <ProjectReference Include="..\..\iFramework.Plugins\IFramework.DependencyInjection.Autofac\IFramework.DependencyInjection.Autofac.csproj" />
     <ProjectReference Include="..\..\iFramework.Plugins\IFramework.DependencyInjection.Unity\IFramework.DependencyInjection.Unity.csproj" />

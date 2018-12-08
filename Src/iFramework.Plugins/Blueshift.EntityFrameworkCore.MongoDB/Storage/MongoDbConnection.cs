@@ -92,6 +92,7 @@ namespace Blueshift.EntityFrameworkCore.MongoDB.Storage
         public virtual IQueryable<TEntity> Query<TEntity>()
             => GetCollection<TEntity>().AsQueryable();
 
+
         public void ResetState()
         {
             

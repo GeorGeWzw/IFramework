@@ -21,7 +21,7 @@ namespace IFramework.MessageStores.Abstracts
             : base(options)
         {
             Logger = ObjectProviderFactory.GetService<ILoggerFactory>().CreateLogger(GetType());
-            InMemoryStore = options.FindExtension<InMemoryOptionsExtension>() != null;
+            InMemoryStore = false;//options.FindExtension<InMemoryOptionsExtension>() != null;
         }
 
         public DbSet<Command> Commands { get; set; }

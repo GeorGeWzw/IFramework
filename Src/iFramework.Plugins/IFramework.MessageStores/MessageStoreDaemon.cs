@@ -11,9 +11,9 @@ using Microsoft.Extensions.Logging;
 
 namespace IFramework.MessageStores.Relational
 {
-    public class MessageStoreDaemon : Abstracts.MessageStoreDaemon
+    public class MessageStoreDaemon : IFramework.MessageStores.Abstracts.MessageStoreDaemon
     {
-        protected override void RemoveUnSentCommands(Abstracts.MessageStore messageStore, string[] toRemoveCommands)
+        protected override void RemoveUnSentCommands(IFramework.MessageStores.Abstracts.MessageStore messageStore, string[] toRemoveCommands)
         {
             if (messageStore.InMemoryStore)
             {
@@ -24,7 +24,7 @@ namespace IFramework.MessageStores.Relational
             messageStore.Database.ExecuteSqlCommand(deleteCommandsSql);
         }
 
-        protected override void RemoveUnPublishedEvents(Abstracts.MessageStore messageStore, string[] toRemoveEvents)
+        protected override void RemoveUnPublishedEvents(IFramework.MessageStores.Abstracts.MessageStore messageStore, string[] toRemoveEvents)
         {
             if (messageStore.InMemoryStore)
             {
@@ -35,6 +35,6 @@ namespace IFramework.MessageStores.Relational
             messageStore.Database.ExecuteSqlCommand(deleteEventsSql);
         }
 
-        public MessageStoreDaemon(ILogger<Abstracts.MessageStoreDaemon> logger) : base(logger) { }
+        public MessageStoreDaemon(ILogger<IFramework.MessageStores.Abstracts.MessageStoreDaemon> logger) : base(logger) { }
     }
 }

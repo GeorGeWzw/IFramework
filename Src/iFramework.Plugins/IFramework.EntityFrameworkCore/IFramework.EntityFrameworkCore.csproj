@@ -23,13 +23,9 @@
     <NoWarn>1701;1702;EF1000</NoWarn>
   </PropertyGroup>
 
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.1.2" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\iFramework\IFramework.csproj" />
+    <ProjectReference Include="..\EFCore\Microsoft.EntityFrameworkCore.csproj" />
   </ItemGroup>
 
 </Project>

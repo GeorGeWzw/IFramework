@@ -52,9 +52,9 @@ namespace IFramework.Test.EntityFramework
             userEntity.HasKey(u => u.Id);
             
 
-            modelBuilder.Entity<Person>()
-                        .Property(e => e.Id)
-                        .UseMySQLAutoIncrementColumn(nameof(Person));
+            //modelBuilder.Entity<Person>()
+            //            .Property(e => e.Id)
+            //            .UseMySQLAutoIncrementColumn(nameof(Person));
         }
     }
 }
