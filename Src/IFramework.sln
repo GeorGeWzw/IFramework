@@ -97,6 +97,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IFramework.MessageStores.Ab
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IFramework.Logging.Log4Net", "iFramework.Plugins\IFramework.Logging.Log4Net\IFramework.Logging.Log4Net.csproj", "{E7CE557F-CA29-4FF0-86D6-560891A2FD6F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IFramework.EntityFrameworkCore.Redis", "iFramework.Plugins\IFramework.EntityFrameworkCore.Redis\IFramework.EntityFrameworkCore.Redis.csproj", "{04B51FC1-CCEA-49DA-AE09-BC00C104091D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -704,6 +706,24 @@ Global
 		{E7CE557F-CA29-4FF0-86D6-560891A2FD6F}.Release|x64.Build.0 = Release|Any CPU
 		{E7CE557F-CA29-4FF0-86D6-560891A2FD6F}.Release|x86.ActiveCfg = Release|Any CPU
 		{E7CE557F-CA29-4FF0-86D6-560891A2FD6F}.Release|x86.Build.0 = Release|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Debug|x64.Build.0 = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Debug|x86.Build.0 = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Integration|Any CPU.ActiveCfg = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Integration|Any CPU.Build.0 = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Integration|x64.ActiveCfg = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Integration|x64.Build.0 = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Integration|x86.ActiveCfg = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Integration|x86.Build.0 = Debug|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Release|x64.ActiveCfg = Release|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Release|x64.Build.0 = Release|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Release|x86.ActiveCfg = Release|Any CPU
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -743,9 +763,10 @@ Global
 		{768DE1E1-0B8B-4D71-81F7-9F3C9C988B49} = {A0DFB82C-D746-4443-8C1B-7AB2DF36EF85}
 		{EE594A07-4919-431D-97FC-66EFEB7E7352} = {A0DFB82C-D746-4443-8C1B-7AB2DF36EF85}
 		{E7CE557F-CA29-4FF0-86D6-560891A2FD6F} = {D85A2D0B-5D20-4C0F-B06F-D688EFAD1624}
+		{04B51FC1-CCEA-49DA-AE09-BC00C104091D} = {7768DF10-5F24-44B4-8DF9-187F160C4D3A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {98DDB08A-700A-4572-905F-A7DBB5ECED71}
 		EnterpriseLibraryConfigurationToolBinariesPath = packages\Unity.2.1.505.2\lib\NET35
+		SolutionGuid = {98DDB08A-700A-4572-905F-A7DBB5ECED71}
 	EndGlobalSection
 EndGlobal

@@ -39,6 +39,7 @@
   <ItemGroup>
     <ProjectReference Include="..\iFramework.Plugins\IFramework.DependencyInjection.Autofac\IFramework.DependencyInjection.Autofac.csproj" />
     <ProjectReference Include="..\iFramework.Plugins\IFramework.DependencyInjection.Unity\IFramework.DependencyInjection.Unity.csproj" />
+    <ProjectReference Include="..\iFramework.Plugins\IFramework.EntityFrameworkCore.Redis\IFramework.EntityFrameworkCore.Redis.csproj" />
     <ProjectReference Include="..\iFramework.Plugins\IFramework.EntityFrameworkCore\IFramework.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\iFramework.Plugins\IFramework.JsonNetCore\IFramework.JsonNet.csproj" />
     <ProjectReference Include="..\iFramework.Plugins\IFramework.Log4Net\IFramework.Log4Net.csproj" />

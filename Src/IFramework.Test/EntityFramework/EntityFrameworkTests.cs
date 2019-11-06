@@ -26,14 +26,16 @@ namespace IFramework.Test.EntityFramework
         public static string MySqlConnectionStringName = "DemoDbContext.MySql";
         public static string ConnectionStringName = "DemoDbContext";
         public static string MongoDbConnectionStringName = "DemoDbContext.MongoDb";
+        public static string RedisConnectionStringName = "DemoDbContext.Redis";
 
         public DemoDbContext CreateDbContext(string[] args)
         {
             var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
                                                     .AddJsonFile("appsettings.json");
-            var configuratoin = builder.Build();
+            var configuration = builder.Build();
             var optionsBuilder = new DbContextOptionsBuilder<DemoDbContext>();
-            optionsBuilder.UseMySQL(configuratoin.GetConnectionString(MySqlConnectionStringName));
+            //optionsBuilder.UseMySQL(configuratoin.GetConnectionString(MySqlConnectionStringName));
+            optionsBuilder.UseRedis(configuration.GetConnectionString(RedisConnectionStringName));
             //optionsBuilder.UseSqlServer(configuratoin.GetConnectionString(ConnectionStringName));
             //optionsBuilder.UseMongoDb(configuratoin.GetConnectionString(MongoDbConnectionStringName));
             return new DemoDbContext(optionsBuilder.Options);
@@ -67,7 +69,8 @@ namespace IFramework.Test.EntityFramework
                         //options.UseMySQL(Configuration.Instance.GetConnectionString(DemoDbContextFactory.MySqlConnectionStringName));
                         //options.UseMySql(Configuration.Instance.GetConnectionString(DemoDbContextFactory.MySqlConnectionStringName));
                         //options.UseInMemoryDatabase(nameof(DemoDbContext));
-                        options.UseSqlServer(Configuration.Instance.GetConnectionString(DemoDbContextFactory.ConnectionStringName));
+                        //options.UseSqlServer(Configuration.Instance.GetConnectionString(DemoDbContextFactory.ConnectionStringName));
+                        options.UseRedis(Configuration.Instance.GetConnectionString(DemoDbContextFactory.RedisConnectionStringName));
                     });
 
             ObjectProviderFactory.Instance.Build(services);
