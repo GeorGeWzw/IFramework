@@ -1,0 +1,5 @@
+<#
+    Session["ResourceFile"] = "RedisStrings.resx";
+    Session["LoggingDefinitionsClass"] = "Diagnostics.Internal.RedisLoggingDefinitions";
+#>
+<#@ include file="..\..\..\Resources.tt" #>

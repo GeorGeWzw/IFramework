@@ -1,8 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
+using IFramework.EntityFrameworkCore.Redis.Diagnostics.Internal;
 using IFramework.EntityFrameworkCore.Redis.Infrastructure;
+using IFramework.EntityFrameworkCore.Redis.Query.Internal;
+using IFramework.EntityFrameworkCore.Redis.Storage.Internal;
+using IFramework.EntityFrameworkCore.Redis.ValueGeneration.Internal;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.ValueGeneration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace IFramework.EntityFrameworkCore.Redis.DependencyInjection
@@ -15,8 +23,19 @@ namespace IFramework.EntityFrameworkCore.Redis.DependencyInjection
             {
                 throw new ArgumentNullException(nameof(serviceCollection));
             }
-            var entityFrameworkServicesBuilder = new EntityFrameworkRedisServicesBuilder(serviceCollection);
-            entityFrameworkServicesBuilder.TryAddCoreServices();
+
+            var builder = new EntityFrameworkServicesBuilder(serviceCollection)
+                          .TryAdd<LoggingDefinitions, RedisLoggingDefinitions>()
+                          .TryAdd<IDatabaseProvider, DatabaseProvider<RedisOptionsExtension>>()
+                          .TryAdd<IValueGeneratorSelector, RedisValueGeneratorSelector>()
+                          .TryAdd<IDatabase>(p => p.GetService<IRedisDatabase>())
+                          .TryAdd<IDbContextTransactionManager, RedisTransactionManager>()
+                          .TryAdd<IDatabaseCreator, RedisDatabaseCreator>()
+                          .TryAdd<IQueryContextFactory, RedisQueryContextFactory>()
+                          .TryAddProviderSpecificServices(b => b.TryAddScoped<IRedisDatabase, RedisDatabase>());
+
+
+            builder.TryAddCoreServices();
             return serviceCollection;
         }
     }
