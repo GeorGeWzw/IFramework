@@ -70,14 +70,14 @@ namespace IFramework.Test.EntityFramework
                         //options.UseMySql(Configuration.Instance.GetConnectionString(DemoDbContextFactory.MySqlConnectionStringName));
                         //options.UseInMemoryDatabase(nameof(DemoDbContext));
                         //options.UseSqlServer(Configuration.Instance.GetConnectionString(DemoDbContextFactory.ConnectionStringName));
-                        options.UseRedis(Configuration.Instance.GetConnectionString(DemoDbContextFactory.RedisConnectionStringName));
+                        options.UseRedis(Configuration.Instance.GetConnectionString(DemoDbContextFactory.RedisConnectionStringName), 7);
                     });
 
             ObjectProviderFactory.Instance.Build(services);
             using (var serviceScope = ObjectProviderFactory.CreateScope())
             {
                 var dbContext = serviceScope.GetService<DemoDbContext>();
-                dbContext.Database.EnsureCreated();
+               // dbContext.Database.EnsureCreated();
             }
         }
 
@@ -266,7 +266,7 @@ namespace IFramework.Test.EntityFramework
                 //options.UseMongoDb(Configuration.Instance.GetConnectionString(DemoDbContextFactory.MongoDbConnectionStringName));
 
                 var dbContext = scope.GetService<DemoDbContext>();
-                dbContext.InitializeTenant();
+                //dbContext.InitializeTenant();
                 try
                 {
                     var user = await dbContext.Users.FindAsync("5D6E104A0CCE415AD44F17AE")

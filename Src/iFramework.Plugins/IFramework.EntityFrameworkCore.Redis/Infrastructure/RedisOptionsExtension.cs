@@ -35,7 +35,7 @@ namespace Microsoft.EntityFrameworkCore
 
         public virtual ConnectionMultiplexer ConnectionMultiplexer => _connectionMultiplexer ??= ConnectionMultiplexer.Connect(ConnectionString);
 
-        public virtual IDatabase Dd => _db ??= ConnectionMultiplexer.GetDatabase(DatabaseName, AsyncState);
+        public virtual IDatabase Database => _db ??= ConnectionMultiplexer.GetDatabase(DatabaseName, AsyncState);
 
         public virtual RedisOptionsExtension Clone()
         {

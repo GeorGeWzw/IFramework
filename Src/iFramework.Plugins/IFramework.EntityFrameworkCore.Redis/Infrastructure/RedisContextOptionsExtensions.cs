@@ -9,6 +9,7 @@ namespace Microsoft.EntityFrameworkCore
     {
         public static DbContextOptionsBuilder UseRedis([NotNull] this DbContextOptionsBuilder optionsBuilder,
                                                        [NotNull] string connectionString,
+                                                       int defaultDatabaseName = -1,
                                                        Action<RedisContextOptionsBuilder> redisOptionsAction = null)
         {
             if (optionsBuilder == null)
@@ -22,9 +23,10 @@ namespace Microsoft.EntityFrameworkCore
             }
 
             RedisOptionsExtension extension = GetOrCreateExtension(optionsBuilder).WithConnectionString(connectionString);
+           
             ((IDbContextOptionsBuilderInfrastructure) optionsBuilder).AddOrUpdateExtension(extension);
 
-            redisOptionsAction?.Invoke(new RedisContextOptionsBuilder(optionsBuilder));
+            redisOptionsAction?.Invoke(new RedisContextOptionsBuilder(optionsBuilder).UseDatabase(defaultDatabaseName));
 
             return optionsBuilder;
         }

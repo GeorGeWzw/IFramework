@@ -2,8 +2,10 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using IFramework.EntityFrameworkCore.Redis.Query.Internal;
 using IFramework.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -18,31 +20,14 @@ namespace IFramework.EntityFrameworkCore.Redis.Storage.Internal
     public class RedisDatabase : Database, IRedisDatabase
     {
         private static readonly ConcurrentDictionary<Type, string[]> KeyPropertiesByEntityType = new ConcurrentDictionary<Type, string[]>();
-        private readonly        IDatabase                            _database;
-        private readonly        RedisOptionsExtension                _redisOptionsExtension;
+        private readonly IDatabase _database;
+        private readonly RedisOptionsExtension _redisOptionsExtension;
 
         public RedisDatabase(DatabaseDependencies dependencies,
-                             IDatabase            database,
-                             IDbContextOptions    options) : base(dependencies)
+                             IDbContextOptions options) : base(dependencies)
         {
-            _database = database;
             _redisOptionsExtension = options.FindExtension<RedisOptionsExtension>();
-        }
-
-        public static string GetKey(EntityEntry entry)
-        {
-            var keyProperties = KeyPropertiesByEntityType.GetOrAdd(entry.Entity.GetType(),
-                                                                   t => entry.Metadata
-                                                                             .FindPrimaryKey()
-                                                                             .Properties
-                                                                             .Select(property => property.Name)
-                                                                             .ToArray());
-
-            var keyParts = keyProperties.Select(propertyName => entry.Property(propertyName)
-                                                                     .CurrentValue)
-                                        .ToArray();
-
-            return keyParts.First().ToString();
+            _database = _redisOptionsExtension.Database;
         }
 
 
@@ -106,6 +91,29 @@ namespace IFramework.EntityFrameworkCore.Redis.Storage.Internal
             await Task.WhenAll(allTasks);
 
             return (int) (deleteTask?.Result ?? 0) + updateTasks.Count(t => t.Result) + addTasks.Count(t => t.Result);
+        }
+
+        public IQueryable<TEntity> Query<TEntity>(Expression expression, IQueryProvider queryProvider)
+        {
+            return new RedisQueryableImpl<TEntity>(_database, expression, queryProvider);
+        }
+
+        public IDatabase Database => _database;
+
+        public static string GetKey(EntityEntry entry)
+        {
+            var keyProperties = KeyPropertiesByEntityType.GetOrAdd(entry.Entity.GetType(),
+                                                                   t => entry.Metadata
+                                                                             .FindPrimaryKey()
+                                                                             .Properties
+                                                                             .Select(property => property.Name)
+                                                                             .ToArray());
+
+            var keyParts = keyProperties.Select(propertyName => entry.Property(propertyName)
+                                                                     .CurrentValue)
+                                        .ToArray();
+
+            return keyParts.First().ToString();
         }
     }
 }
