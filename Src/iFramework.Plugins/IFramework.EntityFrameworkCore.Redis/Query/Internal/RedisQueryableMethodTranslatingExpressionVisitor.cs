@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace IFramework.EntityFrameworkCore.Redis.Query.Internal
 {
@@ -96,7 +96,34 @@ namespace IFramework.EntityFrameworkCore.Redis.Query.Internal
 
         protected override ShapedQueryExpression TranslateFirstOrDefault(ShapedQueryExpression source, LambdaExpression predicate, Type returnType, bool returnDefault)
         {
-            throw new NotImplementedException();
+            return TranslateSingleResultOperator(source,
+                                                 predicate,
+                                                 returnType,
+                                                 returnDefault
+                                                     ? EnumerableMethods.FirstOrDefaultWithoutPredicate
+                                                     : EnumerableMethods.FirstWithoutPredicate);
+        }
+
+        private ShapedQueryExpression TranslateSingleResultOperator(ShapedQueryExpression source, LambdaExpression predicate, Type returnType, MethodInfo method)
+        {
+            var redisQueryExpression = (RedisQueryExpression) source.QueryExpression;
+
+            if (predicate != null)
+            {
+                source = TranslateWhere(source, predicate);
+                if (source == null)
+                {
+                    return null;
+                }
+            }
+
+
+            if (source.ShaperExpression.Type != returnType)
+            {
+                source.ShaperExpression = Expression.Convert(source.ShaperExpression, returnType);
+            }
+
+            return source;
         }
 
         protected override ShapedQueryExpression TranslateGroupBy(ShapedQueryExpression source, LambdaExpression keySelector, LambdaExpression elementSelector, LambdaExpression resultSelector)
@@ -161,7 +188,12 @@ namespace IFramework.EntityFrameworkCore.Redis.Query.Internal
 
         protected override ShapedQueryExpression TranslateSelect(ShapedQueryExpression source, LambdaExpression selector)
         {
-            throw new NotImplementedException();
+            if (selector.Body == selector.Parameters[0])
+            {
+                return source;
+            }
+
+            return source;
         }
 
         protected override ShapedQueryExpression TranslateSelectMany(ShapedQueryExpression source, LambdaExpression collectionSelector, LambdaExpression resultSelector)
@@ -216,7 +248,7 @@ namespace IFramework.EntityFrameworkCore.Redis.Query.Internal
 
         protected override ShapedQueryExpression TranslateWhere(ShapedQueryExpression source, LambdaExpression predicate)
         {
-            throw new NotImplementedException();
+            return source;
         }
     }
 }

@@ -15,9 +15,9 @@ namespace IFramework.EntityFrameworkCore.Redis.Query.Internal
     {
         private readonly IDatabase _database;
 
-        public RedisQueryProviderImpl(IDatabase database)
+        public RedisQueryProviderImpl(RedisDbContextOptionsExtension dbContextOptions)
         {
-            _database = database;
+            _database = dbContextOptions.Database;
         }
 
         public IQueryable CreateQuery(Expression expression)

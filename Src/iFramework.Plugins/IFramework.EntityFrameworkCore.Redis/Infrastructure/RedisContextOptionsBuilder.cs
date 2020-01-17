@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using IFramework.EntityFrameworkCore.Redis.Infrastructure;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Microsoft.EntityFrameworkCore
@@ -17,14 +18,14 @@ namespace Microsoft.EntityFrameworkCore
 
         public RedisContextOptionsBuilder UseDatabase(int databaseName)
         {
-            RedisOptionsExtension extension = CloneExtension();
+            RedisDbContextOptionsExtension extension = CloneExtension();
             extension.DatabaseName = databaseName;
             ((IDbContextOptionsBuilderInfrastructure)OptionsBuilder).AddOrUpdateExtension(extension);
             return this;
         }
 
        
-        protected virtual RedisOptionsExtension CloneExtension()
-            => new RedisOptionsExtension(OptionsBuilder.Options.GetExtension<RedisOptionsExtension>());
+        protected virtual RedisDbContextOptionsExtension CloneExtension()
+            => new RedisDbContextOptionsExtension(OptionsBuilder.Options.GetExtension<RedisDbContextOptionsExtension>());
     }
 }

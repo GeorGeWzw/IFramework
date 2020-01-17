@@ -22,7 +22,7 @@ namespace IFramework.EntityFrameworkCore.Redis.Infrastructure
                 if (this._logFragment == null)
                 {
                     StringBuilder stringBuilder = new StringBuilder();
-                    stringBuilder.Append("StoreName=").Append((this.Extension as RedisOptionsExtension)?.ConnectionMultiplexer).Append(' ');
+                    stringBuilder.Append("StoreName=").Append((this.Extension as RedisDbContextOptionsExtension)?.ConnectionMultiplexer).Append(' ');
                     this._logFragment = stringBuilder.ToString();
                 }
                 return this._logFragment;
@@ -31,13 +31,13 @@ namespace IFramework.EntityFrameworkCore.Redis.Infrastructure
 
         public override long GetServiceProviderHashCode()
         {
-            return (this.Extension as RedisOptionsExtension)?.ConnectionMultiplexer?.GetHashCode() ?? 0L;
+            return (this.Extension as RedisDbContextOptionsExtension)?.ConnectionMultiplexer?.GetHashCode() ?? 0L;
         }
 
         public override void PopulateDebugInfo(IDictionary<string, string> debugInfo)
         {
             IDictionary<string, string> dictionary = debugInfo;
-            int? hashCode = (this.Extension as RedisOptionsExtension)?.ConnectionMultiplexer?.GetHashCode();
+            int? hashCode = (this.Extension as RedisDbContextOptionsExtension)?.ConnectionMultiplexer?.GetHashCode();
             string str = (hashCode.HasValue ? (long) hashCode.GetValueOrDefault() : 0L).ToString((IFormatProvider) CultureInfo.InvariantCulture);
             dictionary["Redis:DatabaseRoot"] = str;
         }

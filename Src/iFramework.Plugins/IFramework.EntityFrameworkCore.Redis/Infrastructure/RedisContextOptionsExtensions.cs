@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using IFramework.EntityFrameworkCore.Redis.Infrastructure;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using StackExchange.Redis;
 
@@ -22,7 +23,7 @@ namespace Microsoft.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(connectionString));
             }
 
-            RedisOptionsExtension extension = GetOrCreateExtension(optionsBuilder).WithConnectionString(connectionString);
+            RedisDbContextOptionsExtension extension = GetOrCreateExtension(optionsBuilder).WithConnectionString(connectionString);
            
             ((IDbContextOptionsBuilderInfrastructure) optionsBuilder).AddOrUpdateExtension(extension);
 
@@ -36,7 +37,7 @@ namespace Microsoft.EntityFrameworkCore
                                                        [NotNull] ConnectionMultiplexer connection,
                                                        Action<RedisContextOptionsBuilder> redisOptionsAction = null)
         {
-            RedisOptionsExtension extension = GetOrCreateExtension(optionsBuilder).WithConnection(connection);
+            RedisDbContextOptionsExtension extension = GetOrCreateExtension(optionsBuilder).WithConnection(connection);
             ((IDbContextOptionsBuilderInfrastructure) optionsBuilder).AddOrUpdateExtension(extension);
 
             redisOptionsAction?.Invoke(new RedisContextOptionsBuilder(optionsBuilder));
@@ -45,9 +46,9 @@ namespace Microsoft.EntityFrameworkCore
         }
 
 
-        private static RedisOptionsExtension GetOrCreateExtension(DbContextOptionsBuilder optionsBuilder)
+        private static RedisDbContextOptionsExtension GetOrCreateExtension(DbContextOptionsBuilder optionsBuilder)
         {
-            return optionsBuilder.Options.FindExtension<RedisOptionsExtension>() ?? new RedisOptionsExtension();
+            return optionsBuilder.Options.FindExtension<RedisDbContextOptionsExtension>() ?? new RedisDbContextOptionsExtension();
         }
     }
 }

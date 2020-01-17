@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using IFramework.EntityFrameworkCore.Redis.Infrastructure;
 using IFramework.EntityFrameworkCore.Redis.Query.Internal;
 using IFramework.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -21,13 +22,13 @@ namespace IFramework.EntityFrameworkCore.Redis.Storage.Internal
     {
         private static readonly ConcurrentDictionary<Type, string[]> KeyPropertiesByEntityType = new ConcurrentDictionary<Type, string[]>();
         private readonly IDatabase _database;
-        private readonly RedisOptionsExtension _redisOptionsExtension;
+        private readonly RedisDbContextOptionsExtension _redisDbContextOptionsExtension;
 
         public RedisDatabase(DatabaseDependencies dependencies,
-                             IDbContextOptions options) : base(dependencies)
+                             RedisDbContextOptionsExtension options) : base(dependencies)
         {
-            _redisOptionsExtension = options.FindExtension<RedisOptionsExtension>();
-            _database = _redisOptionsExtension.Database;
+            _redisDbContextOptionsExtension = options;
+            _database = _redisDbContextOptionsExtension.Database;
         }
 
 
@@ -38,7 +39,7 @@ namespace IFramework.EntityFrameworkCore.Redis.Storage.Internal
 
         public override async Task<int> SaveChangesAsync(IList<IUpdateEntry> entries, CancellationToken cancellationToken = new CancellationToken())
         {
-            var transaction = _database.CreateTransaction(_redisOptionsExtension.AsyncState);
+            var transaction = _database.CreateTransaction(_redisDbContextOptionsExtension.AsyncState);
 
             var toDeleteKeys = entries.Where(e => e.EntityState == EntityState.Deleted)
                                       .Select(e =>

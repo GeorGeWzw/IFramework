@@ -1,26 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using IFramework.EntityFrameworkCore.Redis.DependencyInjection;
-using IFramework.EntityFrameworkCore.Redis.Infrastructure;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 
-namespace Microsoft.EntityFrameworkCore
+namespace IFramework.EntityFrameworkCore.Redis.Infrastructure
 {
-    public class RedisOptionsExtension: IDbContextOptionsExtension
+    public class RedisDbContextOptionsExtension: IDbContextOptionsExtension
     {
         private ConnectionMultiplexer _connectionMultiplexer;
         private IDatabase _db;
-        public RedisOptionsExtension()
+        public RedisDbContextOptionsExtension()
         {
 
         }
 
-        public RedisOptionsExtension(RedisOptionsExtension copyFrom)
+        public RedisDbContextOptionsExtension(RedisDbContextOptionsExtension copyFrom)
         {
             DatabaseName = copyFrom.DatabaseName;
             AsyncState = copyFrom.AsyncState;
@@ -37,20 +33,20 @@ namespace Microsoft.EntityFrameworkCore
 
         public virtual IDatabase Database => _db ??= ConnectionMultiplexer.GetDatabase(DatabaseName, AsyncState);
 
-        public virtual RedisOptionsExtension Clone()
+        public virtual RedisDbContextOptionsExtension Clone()
         {
-            return new RedisOptionsExtension(this);
+            return new RedisDbContextOptionsExtension(this);
         }
 
-        public virtual RedisOptionsExtension WithConnectionString([NotNull] string connectionString)
+        public virtual RedisDbContextOptionsExtension WithConnectionString([NotNull] string connectionString)
         {
            
-            RedisOptionsExtension optionsExtension = this.Clone();
-            optionsExtension.ConnectionString = connectionString;
-            return optionsExtension;
+            RedisDbContextOptionsExtension dbContextOptionsExtension = this.Clone();
+            dbContextOptionsExtension.ConnectionString = connectionString;
+            return dbContextOptionsExtension;
         }
 
-        public virtual RedisOptionsExtension WithConnection(
+        public virtual RedisDbContextOptionsExtension WithConnection(
             [NotNull] ConnectionMultiplexer connectionMultiplexer)
         {
             if (connectionMultiplexer == null)
@@ -58,15 +54,16 @@ namespace Microsoft.EntityFrameworkCore
                 throw new ArgumentNullException(nameof(connectionMultiplexer));
             }
 
-            RedisOptionsExtension optionsExtension = this.Clone();
-            optionsExtension._connectionMultiplexer = connectionMultiplexer;
-            return optionsExtension;
+            RedisDbContextOptionsExtension dbContextOptionsExtension = this.Clone();
+            dbContextOptionsExtension._connectionMultiplexer = connectionMultiplexer;
+            return dbContextOptionsExtension;
         }
 
      
         public virtual void ApplyServices(IServiceCollection services)
         {
-            services.AddEntityFrameworkRedis();
+            services.AddEntityFrameworkRedis()
+                    .AddSingleton(this);
         }
 
         public void Validate(IDbContextOptions options)

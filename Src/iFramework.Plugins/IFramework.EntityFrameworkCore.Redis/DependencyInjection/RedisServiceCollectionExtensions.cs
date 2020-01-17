@@ -29,7 +29,7 @@ namespace IFramework.EntityFrameworkCore.Redis.DependencyInjection
 
             var builder = new EntityFrameworkServicesBuilder(serviceCollection)
                           .TryAdd<LoggingDefinitions, RedisLoggingDefinitions>()
-                          .TryAdd<IDatabaseProvider, DatabaseProvider<RedisOptionsExtension>>()
+                          .TryAdd<IDatabaseProvider, DatabaseProvider<RedisDbContextOptionsExtension>>()
                           .TryAdd<IValueGeneratorSelector, RedisValueGeneratorSelector>()
                           .TryAdd<IDatabase>(p => p.GetService<IRedisDatabase>())
                           .TryAdd<IDbContextTransactionManager, RedisTransactionManager>()
@@ -39,10 +39,7 @@ namespace IFramework.EntityFrameworkCore.Redis.DependencyInjection
                           .TryAdd<IQueryableMethodTranslatingExpressionVisitorFactory, RedisQueryableMethodTranslatingExpressionVisitorFactory>()
                           .TryAdd<IProviderConventionSetBuilder, RedisConventionSetBuilder>()
                           .TryAdd<ITypeMappingSource, RedisTypeMappingSource>()
-                          .TryAddProviderSpecificServices(b => b.TryAddScoped(p => p.GetService<IDbContextOptions>()
-                                                                                    .FindExtension<RedisOptionsExtension>()
-                                                                                    .Database)
-                                                                .TryAddScoped<IRedisDatabase, RedisDatabase>()
+                          .TryAddProviderSpecificServices(b => b.TryAddScoped<IRedisDatabase, RedisDatabase>()
                                                                 .TryAddScoped<IQueryProvider, RedisQueryProviderImpl>());
 
 
