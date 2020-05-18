@@ -21,7 +21,7 @@ namespace IFramework.MessageStores.Relational
                 return;
             }
             var deleteCommandsSql = $"delete from msgs_UnSentCommands where Id in ({string.Join(",", toRemoveCommands.Select(rm => $"'{rm}'"))})";
-            messageStore.Database.ExecuteSqlCommand(deleteCommandsSql);
+            messageStore.Database.ExecuteSqlRaw(deleteCommandsSql);
         }
 
         protected override void RemoveUnPublishedEvents(Abstracts.MessageStore messageStore, string[] toRemoveEvents)
@@ -32,7 +32,7 @@ namespace IFramework.MessageStores.Relational
                 return;
             }
             var deleteEventsSql = $"delete from msgs_UnPublishedEvents where Id in ({string.Join(",", toRemoveEvents.Select(rm => $"'{rm}'"))})";
-            messageStore.Database.ExecuteSqlCommand(deleteEventsSql);
+            messageStore.Database.ExecuteSqlRaw(deleteEventsSql);
         }
 
         public MessageStoreDaemon(ILogger<Abstracts.MessageStoreDaemon> logger) : base(logger) { }

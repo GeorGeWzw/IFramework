@@ -1,6 +1,6 @@
 ﻿<Project>
   <PropertyGroup>
-    <VersionPrefix>3.1.0-preview1008</VersionPrefix>
+    <VersionPrefix>5.0.0-preview001</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <PackageVersion Condition="'$(IsFinalBuild)' == 'true' AND '$(VersionSuffix)' == 'prerelease' ">$(VersionPrefix)</PackageVersion>
     <PackageVersion Condition="'$(IsFinalBuild)' == 'true' AND '$(VersionSuffix)' != 'prerelease' ">$(VersionPrefix)-$(VersionSuffix)-final</PackageVersion>

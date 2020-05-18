@@ -129,9 +129,9 @@ namespace IFramework.MessageStores.Abstracts
             modelBuilder.Entity<HandledEvent>()
                         .HasKey(e => new {e.Id, e.SubscriptionName});
 
-            modelBuilder.Entity<HandledEvent>()
-                        .Property(handledEvent => handledEvent.SubscriptionName)
-                        .HasMaxLength(322);
+            //modelBuilder.Entity<HandledEvent>()
+            //            .Property(handledEvent => handledEvent.SubscriptionName)
+            //            .HasMaxLength(322);
 
             modelBuilder.Entity<HandledEvent>()
                         .OwnsOne(e => e.MessageOffset);

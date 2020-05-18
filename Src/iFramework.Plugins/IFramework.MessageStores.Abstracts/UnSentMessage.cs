@@ -26,7 +26,7 @@ namespace IFramework.MessageStores.Abstracts
             Topic = messageContext.Topic;
         }
 
-        [MaxLength(50)]
+        //[MaxLength(50)]
         public string Id { get; set; }
         public string ReplyToEndPoint { get; set; }
         public virtual SagaInfo SagaInfo { get; set; }
